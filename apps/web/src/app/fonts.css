@@ -1,0 +1,11 @@
+/* NOTE: only for autocompletion purposes */
+@import 'tailwindcss';
+@font-face {
+    font-family: 'MysteryQuest';
+    src:
+        local('MysteryQuest'),
+        url('./fonts/MysteryQuest-Regular.ttf') format('opentype')
+            tech(color-COLRv1),
+        url('./fonts/MysteryQuest-Regular.ttf') format('opentype'),
+        url('./fonts/MysteryQuest-Regular.ttf') format('woff');
+}
