@@ -23,6 +23,13 @@ const StoryCard = (props: {
         props.celebrity.month.toString(),
         props.celebrity.year.toString(),
     );
+
+    const getMasterNumberTooltipText = (lifePath: number) => {
+        if (lifePath === 22 || lifePath === 33)
+            return `${lifePath} is a rare Master Number!`;
+        else if (lifePath === 11) return `${lifePath} is a Master Number!`;
+    };
+
     return (
         <Link href={`/profile/${props.celebrity.id}`}>
             <div className="relative overflow-hidden rounded-md">
@@ -44,7 +51,12 @@ const StoryCard = (props: {
                             </p>
                         </TooltipTrigger>
                         <TooltipContent align="center" alignOffset={100}>
-                            <span>Lifepath number</span>
+                            <span>
+                                This is the person&apos;s{' '}
+                                <span className="font-bold">
+                                    Lifepath number
+                                </span>
+                            </span>
                         </TooltipContent>
                     </Tooltip>
 
@@ -56,7 +68,9 @@ const StoryCard = (props: {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent align="center" alignOffset={100}>
-                                <span>Master number</span>
+                                <span>
+                                    {getMasterNumberTooltipText(lifePathNumber)}
+                                </span>
                             </TooltipContent>
                         </Tooltip>
                     )}
