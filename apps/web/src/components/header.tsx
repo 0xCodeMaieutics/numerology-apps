@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export const Header = () => {
     return (
-        <header className="fixed bg-background border z-50 top-0 left-0 right-0 p-4">
+        <header className="fixed bg-background border-b z-50 top-0 left-0 right-0 p-4">
             <div className="w-full max-w-6xl flex gap-5 md:gap-0 items-center justify-between mx-auto">
                 <Link href="/" className="group">
                     <span
