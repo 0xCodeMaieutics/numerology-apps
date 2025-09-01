@@ -7,12 +7,14 @@ import {
     CalculatorIcon,
     HomeIcon,
     LucideIcon,
+    Search,
     Send,
     SettingsIcon,
     UserRound,
     UsersRound,
 } from 'lucide-react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import Link from 'next/link';
 import * as React from 'react';
 
 import { getQueryClient } from '@/lib/react-query';
@@ -62,6 +64,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
                         <SideLink Icon={HomeIcon} isActive>
                             Home
                         </SideLink>
+                        <Link href="/explore">
+                            <SideLink Icon={Search}>Explore</SideLink>
+                        </Link>
+
                         <SideLink Icon={CalculatorIcon}>Calculator</SideLink>
                         <SideLink Icon={UsersRound}>App</SideLink>
                         <SideLink Icon={SettingsIcon}>Settings</SideLink>
