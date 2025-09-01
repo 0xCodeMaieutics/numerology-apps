@@ -1,7 +1,7 @@
 'use client';
 
 import { RedisTypes } from '@/types/api/redis';
-import { ScrollArea, ScrollBar } from '@workspace/ui/components/scroll-area';
+import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { cn } from '@workspace/ui/lib/utils';
 import { ChevronLeft, ChevronRight, Crown } from 'lucide-react';
 import Image from 'next/image';
@@ -109,13 +109,11 @@ export const Stories = ({
                 }}
                 className="rounded-md"
             >
-                <div className="flex gap-3 mb-3">
+                <div className="flex gap-3">
                     {celebrities?.map((celebrity) => (
                         <StoryCard key={celebrity.id} celebrity={celebrity} />
                     ))}{' '}
                 </div>
-
-                <ScrollBar orientation="horizontal" />
             </ScrollArea>
             <button
                 onClick={() => onLeftArrowClick(SCROLL_VALUE)}
