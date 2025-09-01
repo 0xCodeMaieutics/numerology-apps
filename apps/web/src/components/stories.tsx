@@ -111,7 +111,7 @@ export const Stories = ({
                 className={cn(
                     'absolute top-1/2 left-2 transform -translate-y-1/2 transition-opacity duration-300',
                     {
-                        'opacity-20': scrollLeft === 0,
+                        'opacity-0': scrollLeft === 0,
                     },
                 )}
             >
@@ -122,9 +122,9 @@ export const Stories = ({
             <button
                 onClick={() => onRightArrowClick(SCROLL_VALUE)}
                 className={cn(
-                    'absolute top-1/2 right-2 transform -translate-y-1/2 transition-opacity duration-300',
+                    'absolute top-1/2 right-2 transform -translate-y-1/2 transition-opacity duration-150',
                     {
-                        'opacity-20': scrollLeft === scrollWidth,
+                        'opacity-0': scrollLeft === scrollWidth,
                     },
                 )}
             >
