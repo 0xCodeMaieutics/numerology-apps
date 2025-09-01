@@ -89,7 +89,7 @@ export const Stories = ({
     const onRightArrowClick = (value: number) => {
         if (scrollViewportRef.current) {
             scrollViewportRef.current.scroll({
-                left: scrollLeft + value,
+                    left: scrollLeft + value,
                 behavior: 'smooth',
             });
         }

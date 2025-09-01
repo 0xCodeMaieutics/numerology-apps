@@ -1,11 +1,12 @@
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 
 export const Header = () => {
     return (
         <header className="fixed bg-background border z-50 top-0 left-0 right-0 p-4">
-            <div className="w-full max-w-6xl flex justify-between mx-auto">
+            <div className="w-full max-w-6xl flex gap-5 md:gap-0 items-center justify-between mx-auto">
                 <Link href="/" className="group">
                     <span
                         style={{
@@ -23,11 +24,20 @@ export const Header = () => {
                         className="w-full max-w-[490px] mx-auto rounded-md border border-foreground p-2 h-10"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="hidden md:flex gap-2">
                     <Button size={'lg'}>Login</Button>
                     <Button size={'lg'} variant={'secondary'}>
                         App
                     </Button>
+                </div>
+                <div className="block md:hidden">
+                    <button
+                        onClick={() => {
+                            // open the sheet
+                        }}
+                    >
+                        <Menu />
+                    </button>
                 </div>
             </div>
         </header>
