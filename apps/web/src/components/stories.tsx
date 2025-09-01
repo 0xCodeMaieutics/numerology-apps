@@ -3,7 +3,7 @@
 import { RedisTypes } from '@/types/api/redis';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { cn } from '@workspace/ui/lib/utils';
-import { ChevronLeft, ChevronRight, Crown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -33,7 +33,7 @@ const StoryCard = (props: {
                 </div>
                 <div className="absolute flex justify-between w-full bg-linear-to-b from-black to-transparent z-10 top-0 left-0 px-4 py-2.5 text-white">
                     <div>
-                        <span className="text-xs">Life Path</span>{' '}
+                        <span className="text-xs font-medium">Life Path</span>{' '}
                         <span
                             className={cn(
                                 'text-2xl text-primary font-bold block',
@@ -43,8 +43,8 @@ const StoryCard = (props: {
                         </span>
                     </div>
                     {numerology.isMasterNumber(lifePathNumber) && (
-                        <div className="flex justify-center items-center size-8 bg-foreground rounded-full text-xs">
-                            <Crown className="text-primary size-5" />
+                        <div className="flex justify-center items-center size-8 bg-foreground/30 rounded-full text-xs">
+                            <Star className="fill-primary text-primary size-5" />
                         </div>
                     )}
                 </div>
@@ -89,7 +89,7 @@ export const Stories = ({
     const onRightArrowClick = (value: number) => {
         if (scrollViewportRef.current) {
             scrollViewportRef.current.scroll({
-                    left: scrollLeft + value,
+                left: scrollLeft + value,
                 behavior: 'smooth',
             });
         }
