@@ -57,4 +57,8 @@ export const numerology = {
         }
         return sum;
     },
+
+    isMasterNumber: (number: number) => {
+        return masterNumbers.includes(number);
+    }
 };
