@@ -2,6 +2,11 @@
 
 import { RedisTypes } from '@/types/api/redis';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
 import { cn } from '@workspace/ui/lib/utils';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Image from 'next/image';
@@ -31,21 +36,29 @@ const StoryCard = (props: {
                         fill
                     />
                 </div>
-                <div className="absolute flex justify-between w-full bg-linear-to-b from-black to-transparent z-10 top-0 left-0 px-4 py-2.5 text-white">
-                    <div>
-                        <span className="text-xs font-medium">Life Path</span>{' '}
-                        <span
-                            className={cn(
-                                'text-2xl text-primary font-bold block',
-                            )}
-                        >
-                            {lifePathNumber}
-                        </span>
-                    </div>
+                <div className="absolute z-10 top-0 left-0 flex justify-between w-full bg-linear-to-b from-background to-transparent px-4 py-2.5">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <p className={'text-2xl text-primary font-bold'}>
+                                {lifePathNumber}
+                            </p>
+                        </TooltipTrigger>
+                        <TooltipContent align="center" alignOffset={100}>
+                            <span>Lifepath number</span>
+                        </TooltipContent>
+                    </Tooltip>
+
                     {numerology.isMasterNumber(lifePathNumber) && (
-                        <div className="flex justify-center items-center size-8 bg-foreground/30 rounded-full text-xs">
-                            <Star className="fill-primary text-primary size-5" />
-                        </div>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <div className="flex justify-center items-center size-8 bg-foreground/30 rounded-full text-xs">
+                                    <Star className="fill-primary text-primary size-5" />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent align="center" alignOffset={100}>
+                                <span>Master number</span>
+                            </TooltipContent>
+                        </Tooltip>
                     )}
                 </div>
                 <div className="absolute bg-linear-to-t from-black to-transparent w-full pt-2 z-10 bottom-0 left-0 px-4 pb-2.5 text-white">
