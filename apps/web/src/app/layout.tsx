@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import '@workspace/ui/globals.css';
 
 import { Providers } from '@/components/providers';
@@ -25,6 +26,7 @@ export default function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className={'font-sans antialiased'}>
                 <Providers>{children}</Providers>
+                <Analytics />
             </body>
         </html>
     );
