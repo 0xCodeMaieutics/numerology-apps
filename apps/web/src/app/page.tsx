@@ -68,18 +68,30 @@ export default async function Page() {
 
             <div className="space-y-2">
                 {politicsCelebs ? (
-                    <Categories title="Politics" celebrities={politicsCelebs} />
+                    <Categories
+                        category="Politics"
+                        title="Politics"
+                        celebrities={politicsCelebs}
+                    />
                 ) : null}
                 {footballCelebs ? (
-                    <Categories title="Football" celebrities={footballCelebs} />
+                    <Categories
+                        category="Football"
+                        title="Football"
+                        celebrities={footballCelebs}
+                    />
                 ) : null}
                 {mmaCelebs ? (
-                    <Categories title="MMA" celebrities={mmaCelebs} />
+                    <Categories
+                        category="MMA"
+                        title="MMA"
+                        celebrities={mmaCelebs}
+                    />
                 ) : null}
 
                 {influencerCelebs ? (
                     <Categories
-                        title="Influencer"
+                        category="Influencer"
                         celebrities={influencerCelebs}
                     />
                 ) : null}
