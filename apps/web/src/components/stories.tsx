@@ -139,7 +139,7 @@ export const Stories = ({
                 <div className="flex gap-3">
                     {celebrities?.map((celebrity) => (
                         <StoryCard key={celebrity.id} celebrity={celebrity} />
-                    ))}{' '}
+                    ))}
                 </div>
             </ScrollArea>
             <button
