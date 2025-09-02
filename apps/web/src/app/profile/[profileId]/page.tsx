@@ -51,7 +51,9 @@ export default async function ProfilePage({
     params: Promise<{ profileId: string }>;
 }) {
     const { profileId } = await params;
-    const celebProfile = await redis.read.celebrities.profile(profileId);
+    const celebProfile = await redis.read.celebrities.all().then((all) => {
+        return all.find((celeb) => celeb.id === profileId);
+    });
     if (!celebProfile) return <div>Profile not found</div>;
 
     const lifePathNumber = numerology.calculateLifePath(

@@ -21,7 +21,8 @@ enum Category {
     Football = 'football',
 }
 
-const redisHelpers = {
+export const redis = {
+    client: redisClient,
     read: {
         celebrities: {
             all: async () => {
@@ -49,30 +50,13 @@ const redisHelpers = {
                     politicsPromise,
                     footballPromise,
                 ]);
-
-                return [
+                const allCelebs = [
                     ...(mma ? mma : []),
                     ...(influencers ? influencers : []),
                     ...(politics ? politics : []),
                     ...(football ? football : []),
                 ];
-            },
-        },
-    },
-};
-
-export const redis = {
-    client: redisClient,
-    read: {
-        celebrities: {
-            all: async () => {
-                const allCelebs = await redisHelpers.read.celebrities.all();
                 return allCelebs.sort(() => 0.5 - Math.random());
-            },
-            profile: (profileId: string) => {
-                return redisHelpers.read.celebrities.all().then((all) => {
-                    return all.find((celeb) => celeb.id === profileId);
-                });
             },
             category: (category: string) => {
                 return redisClient.get<
