@@ -21,7 +21,7 @@ export const Header = () => {
                 <div className="flex-1">
                     <Input
                         placeholder="Donald Trump"
-                        className="w-full max-w-[490px] mx-auto rounded-md border border-foreground p-2 h-10"
+                        className="w-full max-w-[490px] mx-auto border-1 border-foreground px-3 py-2 h-10"
                     />
                 </div>
                 <div className="hidden md:flex gap-2">
