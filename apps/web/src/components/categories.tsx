@@ -15,6 +15,7 @@ import { numerology } from '@/utils/numerology';
 
 const CategoryCard = (props: {
     celeb: RedisTypes['celebrities']['category']['response'][number];
+    category: string;
 }) => {
     const router = useRouter();
     const shortenedName =
@@ -61,7 +62,7 @@ const CategoryCard = (props: {
                 </p>
                 <p className="text-xs">Zodiac: Tiger (Born in 1975)</p>
                 <p className="text-xs text-muted-foreground">
-                    politics, business
+                    {props.category}
                 </p>
             </div>
             <div className="absolute top-2 right-2 text-muted-foreground text-xs font-medium">
@@ -105,9 +106,11 @@ const Title = ({ title }: { title: string }) => (
 export const Categories = ({
     celebrities,
     title = 'Title',
+    category = '',
 }: {
     celebrities: RedisTypes['celebrities']['category']['response'];
     title?: string;
+    category?: string;
 }) => {
     return (
         <div className="flex flex-col gap-3">
@@ -115,7 +118,11 @@ export const Categories = ({
             <ScrollArea className="w-full rounded-md">
                 <div className="flex gap-4 mb-3">
                     {celebrities.map((celeb) => (
-                        <CategoryCard key={celeb.id} celeb={celeb} />
+                        <CategoryCard
+                            key={celeb.id}
+                            category={category}
+                            celeb={celeb}
+                        />
                     ))}
                 </div>
                 <ScrollBar orientation="horizontal" />
