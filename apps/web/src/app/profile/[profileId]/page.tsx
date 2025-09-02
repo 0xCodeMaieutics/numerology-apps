@@ -83,16 +83,16 @@ export default async function ProfilePage({
                                 src={celebProfile?.image_url}
                                 width={240}
                                 height={240}
-                                className="flex flex-col justify-center items-center shrink-0 size-[240px] rounded-lg object-cover"
+                                className="flex flex-col justify-center items-center shrink-0 size-32 md:size-[240px] rounded-lg object-cover"
                                 alt={`Photo of ${celebProfile?.name}`}
                             />
                         ) : null}
-                        <div className="absolute w-full flex justify-end top-0 px-4 py-2.5 bg-linear-to-b from-background to-transparent">
+                        <div className="absolute w-full flex justify-end top-0 px-2 py-1 sm:px-4 sm:py-2.5 bg-linear-to-b from-background to-transparent">
                             {numerology.isMasterNumber(lifePathNumber) && (
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <div className="flex justify-center items-center size-12 bg-foreground/30 rounded-full text-xs">
-                                            <Star className="fill-primary text-primary size-8" />
+                                        <div className="flex justify-center items-center size-8 sm:size-12 bg-foreground/30 rounded-full text-xs">
+                                            <Star className="fill-primary text-primary size-5 sm:size-8" />
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent
