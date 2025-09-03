@@ -30,9 +30,6 @@
     "drizzle-orm": "^0.44.5",
     "pg": "^8.16.3"
   },
-  "engines": {
-    "node": ">=23.0.0"
-  },
   "dependencies": {
     "@faker-js/faker": "^10.0.0"
   }
