@@ -1,0 +1,37 @@
+name: Deploy Drizzle Schema to Production
+run-name: ${{ github.actor }} is deploying Drizzle Schema
+on:
+  push:
+    paths:
+      - "apps/packages/db/drizzle/**"
+      - "apps/packages/db/drizzle.config.ts"
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9.4.0
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Drizzle Migration Files
+        run: cd apps/web-app && pnpm drizzle-kit migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
