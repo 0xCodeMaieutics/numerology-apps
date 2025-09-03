@@ -7,6 +7,8 @@ export const celebritiesTable = t.pgTable("celebrities", {
   birthDay: t.integer("birth_day").notNull(),
   birthMonth: t.integer("birth_month").notNull(),
   birthYear: t.integer("birth_year").notNull(),
+  createdAt: t.timestamp("created_at").defaultNow().notNull(),
+  updatedAt: t.timestamp("updated_at").defaultNow().notNull(),
   nationality: t.varchar(),
   placeOfBirth: t.text("place_of_birth"),
   imageUrl: t.text("image_url"),
