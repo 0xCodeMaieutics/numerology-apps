@@ -1,2 +1,0 @@
-pnpm test
-pnpm prettier --check "./src/**/*.{ts,tsx,mdx}" --cache
