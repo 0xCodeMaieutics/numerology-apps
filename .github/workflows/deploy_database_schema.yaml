@@ -32,6 +32,6 @@ jobs:
         run: pnpm install
 
       - name: Drizzle Migration Files
-        run: cd apps/web-app && pnpm drizzle-kit migrate
+        run: cd ./packages/db && pnpm drizzle-kit migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
