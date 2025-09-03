@@ -1,0 +1,1 @@
+ALTER TABLE "celebrities" ADD COLUMN "created_at" timestamp DEFAULT now() NOT NULL;
