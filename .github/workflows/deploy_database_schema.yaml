@@ -3,8 +3,8 @@ run-name: ${{ github.actor }} is deploying Drizzle Schema
 on:
   push:
     paths:
-      - "apps/packages/db/drizzle/**"
-      - "apps/packages/db/drizzle.config.ts"
+      - "packages/db/drizzle/**"
+      - "packages/db/drizzle.config.ts"
     branches:
       - main
   workflow_dispatch:
