@@ -8,12 +8,11 @@ import {
     TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
 import { cn } from '@workspace/ui/lib/utils';
+import { numerology } from '@workspace/utils/numerology';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-
-import { numerology } from '@/utils/numerology';
 
 const StoryCard = (props: {
     celebrity: RedisTypes['celebrities']['category']['response'][number];

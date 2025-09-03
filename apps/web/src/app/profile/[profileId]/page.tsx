@@ -4,12 +4,11 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { numerology } from '@workspace/utils/numerology';
 import { format } from 'date-fns';
 import { Bookmark, ChevronLeft, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-
-import { numerology } from '@/utils/numerology';
 
 import { redis } from '@/lib/redis-client';
 
