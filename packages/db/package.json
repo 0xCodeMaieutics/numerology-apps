@@ -5,7 +5,7 @@
   "private": true,
   "exports": {
     "./src/db/*": "./src/db/*.ts",
-    ".": "./src/index.ts"
+    "./*": "./src/index.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^15.4.5",
@@ -14,6 +14,7 @@
     "@typescript-eslint/parser": "^8.39.0",
     "dotenv": "^17.2.2",
     "drizzle-kit": "^0.31.4",
+    "@workspace/utils": "workspace:*",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-only-warn": "^1.1.0",
