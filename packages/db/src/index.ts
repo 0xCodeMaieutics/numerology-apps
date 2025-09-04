@@ -10,7 +10,7 @@ import { count, sql } from "drizzle-orm";
 const client = drizzle({
   connection: {
     connectionString: process.env.DATABASE_URL!,
-    ssl: process.env.NODE_ENV === "production",
+    ...(Boolean(process.env.DATABASE_SSL_ENABLED) ? { ssl: true } : {}),
   },
 });
 
