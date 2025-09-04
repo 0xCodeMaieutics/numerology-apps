@@ -4,6 +4,7 @@ import {
     CardDescription,
     CardTitle,
 } from '@workspace/ui/components/card';
+import { unstable_cache } from 'next/cache';
 import Image from 'next/image';
 
 import { Categories } from '@/components/categories';
@@ -54,16 +55,73 @@ const WelcomeCard = ({
     </Card>
 );
 
-export default async function Page() {
-    const storiesCelebs = await redis.read.celebrities.category('stories');
-    const mmaCelebs = await redis.read.celebrities.category('mma');
-    const footballCelebs = await redis.read.celebrities.category('football');
-    const politicsCelebs = await redis.read.celebrities.category('politics');
-    const influencerCelebs =
-        await redis.read.celebrities.category('influencer');
+const REVALIDATE = 60 * 60 * 3; // 3 hours
 
-    const celebCount = await db.celebrities.count();
-    const userCount = await db.user.count();
+const getUserCount = unstable_cache(
+    async () => db.user.count(),
+    ['user', 'count'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getCelebrityCount = unstable_cache(
+    async () => db.celebrities.count(),
+    ['celebrities', 'count'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getStories = unstable_cache(
+    async () => redis.read.celebrities.category('stories'),
+    ['celebrities', 'stories'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getMMA = unstable_cache(
+    async () => redis.read.celebrities.category('mma'),
+    ['celebrities', 'mma'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getFootball = unstable_cache(
+    async () => redis.read.celebrities.category('football'),
+    ['celebrities', 'football'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getPolitics = unstable_cache(
+    async () => redis.read.celebrities.category('politics'),
+    ['celebrities', 'politics'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+const getInfluencers = unstable_cache(
+    async () => redis.read.celebrities.category('influencer'),
+    ['celebrities', 'influencer'],
+    {
+        revalidate: REVALIDATE,
+    },
+);
+
+export default async function Page() {
+    const storiesCelebs = await getStories();
+    const mmaCelebs = await getMMA();
+    const footballCelebs = await getFootball();
+    const politicsCelebs = await getPolitics();
+    const influencerCelebs = await getInfluencers();
+
+    const celebCount = await getCelebrityCount();
+    const userCount = await getUserCount();
     return (
         <div className="w-full mx-auto max-w-3xl space-y-12">
             {storiesCelebs ? <Stories celebrities={storiesCelebs} /> : null}
