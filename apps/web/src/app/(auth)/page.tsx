@@ -65,6 +65,13 @@ const getUserCount = unstable_cache(
     },
 );
 
+enum CelebrityCategory {
+    Mma = 'mma',
+    Football = 'football',
+    Politics = 'politics',
+    Influencer = 'influencer',
+}
+
 const getCelebrityCount = unstable_cache(
     async () => db.celebrities.select.count(),
     ['celebrities', 'count'],
@@ -82,7 +89,7 @@ const getStories = unstable_cache(
 );
 
 const getMMA = unstable_cache(
-    async () => db.celebrities.select.category('mma'),
+    async () => db.celebrities.select.category(CelebrityCategory.Mma),
     ['celebrities', 'mma'],
     {
         revalidate: REVALIDATE,
@@ -90,7 +97,7 @@ const getMMA = unstable_cache(
 );
 
 const getFootball = unstable_cache(
-    async () => db.celebrities.select.category('football'),
+    async () => db.celebrities.select.category(CelebrityCategory.Football),
     ['celebrities', 'football'],
     {
         revalidate: REVALIDATE,
@@ -98,7 +105,7 @@ const getFootball = unstable_cache(
 );
 
 const getPolitics = unstable_cache(
-    async () => db.celebrities.select.category('politics'),
+    async () => db.celebrities.select.category(CelebrityCategory.Politics),
     ['celebrities', 'politics'],
     {
         revalidate: REVALIDATE,
@@ -106,7 +113,7 @@ const getPolitics = unstable_cache(
 );
 
 const getInfluencers = unstable_cache(
-    async () => db.celebrities.select.category('influencers'),
+    async () => db.celebrities.select.category(CelebrityCategory.Influencer),
     ['celebrities', 'influencer'],
     {
         revalidate: REVALIDATE,
