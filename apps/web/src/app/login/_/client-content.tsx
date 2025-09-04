@@ -129,7 +129,7 @@ export const ClientContent = () => {
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className="w-full space-y-4"
+                    className="w-full px-3 space-y-4"
                 >
                     <FormField
                         control={form.control}
@@ -200,13 +200,13 @@ export const ClientContent = () => {
                 </form>
             </Form>
 
-            <div className="w-full flex items-center gap-2">
+            <div className="w-full px-3 flex items-center gap-2">
                 <Separator className="flex-1" />
                 <span>or</span>
                 <Separator className="flex-1" />
             </div>
 
-            <div className="w-full space-y-3">
+            <div className="w-full px-3 space-y-3">
                 <Button
                     variant={'secondary'}
                     onClick={() => {
