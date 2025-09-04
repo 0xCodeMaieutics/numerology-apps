@@ -14,6 +14,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+import { navigation } from '@/utils/navigation';
+
 const StoryCard = (props: {
     celebrity: RedisTypes['celebrities']['category']['response'][number];
 }) => {
@@ -30,7 +32,7 @@ const StoryCard = (props: {
     };
 
     return (
-        <Link href={`/profile/${props.celebrity.id}`}>
+        <Link href={navigation.celebrity.detail(props.celebrity.id)}>
             <div className="relative overflow-hidden rounded-md">
                 <div className="relative w-[150px] h-[200px]">
                     <Image
