@@ -78,7 +78,7 @@ export default async function CelebrityPage({
     if (!celebProfile) return <div>Profile not found</div>;
 
     return (
-        <div className="min-h-svh w-full max-w-3xl mx-auto space-y-4">
+        <div className="w-full max-w-3xl mx-auto space-y-4">
             <Link href="/" className="flex items-center gap-1.5">
                 <ChevronLeft />
                 <span className="font-semibold">Back</span>
@@ -88,11 +88,11 @@ export default async function CelebrityPage({
                 <div className="flex gap-4">
                     <CelebrityImage celebProfile={celebProfile} />
                     <div className="flex-1 flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                            <span className="font-semibold text-2xl">
+                        <div className="flex justify-between">
+                            <span className="font-semibold text-lg sm:text-2xl">
                                 {celebProfile?.name}
                             </span>
-                            <button className="relative">
+                            <button className="flex relative">
                                 <Bookmark className="text-primary" />
                                 <span className="absolute bg-background -top-1 -right-3 flex items-center justify-center">
                                     <span className="text-xs">1.2k</span>
