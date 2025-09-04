@@ -1,6 +1,7 @@
 'use client';
 
 import { RedisTypes } from '@/types/api/redis';
+import { navigation } from '@/utils/navigation';
 import { ScrollArea, ScrollBar } from '@workspace/ui/components/scroll-area';
 import {
     Tooltip,
@@ -75,7 +76,7 @@ const CategoryCard = (props: {
             role="button"
             tabIndex={0}
             onClick={() => {
-                router.push(`/profile/${props.celeb.id}`);
+                router.push(navigation.celebrity.detail(props.celeb.id));
             }}
             className={cn(
                 'relative shrink-0 rounded-lg border max-w-xs overflow-hidden cursor-pointer hover:bg-foreground/10 transition-colors duration-150',

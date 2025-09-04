@@ -14,18 +14,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ComponentProps } from 'react';
+
+import { navigation } from '@/utils/navigation';
+
+import { authClient } from '@/lib/auth-client';
 
 const SideLink = ({
     children,
     Icon,
     isActive = false,
+    ...props
 }: {
     isActive?: boolean;
     children?: React.ReactNode;
     Icon?: LucideIcon;
-}) => {
+} & ComponentProps<'button'>) => {
     return (
         <Button
+            {...props}
             variant={'ghost'}
             size={'lg'}
             className={cn(
@@ -43,22 +50,58 @@ const SideLink = ({
 
 export const SideBar = () => {
     const pathname = usePathname();
+    const session = authClient.useSession();
     return (
         <aside className="hidden sm:flex flex-col gap-y-4">
             <Link href={'/'}>
-                <SideLink Icon={HomeIcon} isActive={pathname === '/'}>
+                <SideLink
+                    Icon={HomeIcon}
+                    isActive={pathname === navigation.home.page}
+                >
                     Home
                 </SideLink>
             </Link>
             <Link href="/explore">
-                <SideLink Icon={Search} isActive={pathname === '/explore'}>
+                <SideLink
+                    Icon={Search}
+                    isActive={pathname === navigation.explore.page}
+                >
                     Explore
                 </SideLink>
             </Link>
+
             <SideLink Icon={CalculatorIcon}>Calculator</SideLink>
+
             <SideLink Icon={UsersRound}>App</SideLink>
-            <SideLink Icon={SettingsIcon}>Settings</SideLink>
-            <SideLink Icon={UserRound}>Profile</SideLink>
+            <Link
+                href={
+                    session.data
+                        ? navigation.settings.page
+                        : navigation.login.redirect(navigation.settings.page)
+                }
+            >
+                <SideLink
+                    isActive={pathname === navigation.settings.page}
+                    Icon={SettingsIcon}
+                >
+                    Settings
+                </SideLink>
+            </Link>
+            <Link
+                href={
+                    session.data
+                        ? navigation.profile.page
+                        : navigation.login.redirect(navigation.profile.page)
+                }
+            >
+                <SideLink
+                    isActive={pathname === navigation.profile.page}
+                    Icon={UserRound}
+                >
+                    Profile
+                </SideLink>
+            </Link>
+
             <Button
                 size={'lg'}
                 className="text-right text-lg rounded-full p-5 py-6 md:min-w-[200px]"
