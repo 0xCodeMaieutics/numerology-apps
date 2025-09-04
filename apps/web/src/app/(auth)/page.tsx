@@ -55,7 +55,7 @@ const WelcomeCard = ({
     </Card>
 );
 
-const REVALIDATE = 60 * 10; // 10 minutes
+const REVALIDATE = 60 * 60; // 60 minutes
 
 const getUserCount = unstable_cache(
     async () => db.user.select.count(),
