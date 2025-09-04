@@ -55,10 +55,10 @@ const WelcomeCard = ({
     </Card>
 );
 
-const REVALIDATE = 60 * 60 * 3; // 3 hours
+const REVALIDATE = 60 * 10; // 10 minutes
 
 const getUserCount = unstable_cache(
-    async () => db.user.count(),
+    async () => db.user.select.count(),
     ['user', 'count'],
     {
         revalidate: REVALIDATE,
@@ -66,7 +66,7 @@ const getUserCount = unstable_cache(
 );
 
 const getCelebrityCount = unstable_cache(
-    async () => db.celebrities.count(),
+    async () => db.celebrities.select.count(),
     ['celebrities', 'count'],
     {
         revalidate: REVALIDATE,
@@ -82,7 +82,7 @@ const getStories = unstable_cache(
 );
 
 const getMMA = unstable_cache(
-    async () => redis.read.celebrities.category('mma'),
+    async () => db.celebrities.select.category('mma'),
     ['celebrities', 'mma'],
     {
         revalidate: REVALIDATE,
@@ -90,7 +90,7 @@ const getMMA = unstable_cache(
 );
 
 const getFootball = unstable_cache(
-    async () => redis.read.celebrities.category('football'),
+    async () => db.celebrities.select.category('football'),
     ['celebrities', 'football'],
     {
         revalidate: REVALIDATE,
@@ -98,7 +98,7 @@ const getFootball = unstable_cache(
 );
 
 const getPolitics = unstable_cache(
-    async () => redis.read.celebrities.category('politics'),
+    async () => db.celebrities.select.category('politics'),
     ['celebrities', 'politics'],
     {
         revalidate: REVALIDATE,
@@ -106,7 +106,7 @@ const getPolitics = unstable_cache(
 );
 
 const getInfluencers = unstable_cache(
-    async () => redis.read.celebrities.category('influencer'),
+    async () => db.celebrities.select.category('influencers'),
     ['celebrities', 'influencer'],
     {
         revalidate: REVALIDATE,
@@ -128,21 +128,21 @@ export default async function Page() {
             <WelcomeCard userCount={userCount} celebrityCount={celebCount} />
 
             <div className="space-y-2">
-                {politicsCelebs ? (
+                {politicsCelebs.length > 0 ? (
                     <Categories
                         category="Politics"
                         title="Politics"
                         celebrities={politicsCelebs}
                     />
                 ) : null}
-                {footballCelebs ? (
+                {footballCelebs.length > 0 ? (
                     <Categories
                         category="Football"
                         title="Football"
                         celebrities={footballCelebs}
                     />
                 ) : null}
-                {mmaCelebs ? (
+                {mmaCelebs.length > 0 ? (
                     <Categories
                         category="MMA"
                         title="MMA"
@@ -150,7 +150,7 @@ export default async function Page() {
                     />
                 ) : null}
 
-                {influencerCelebs ? (
+                {influencerCelebs.length > 0 ? (
                     <Categories
                         category="Influencer"
                         title="Influencers & Youtubers"

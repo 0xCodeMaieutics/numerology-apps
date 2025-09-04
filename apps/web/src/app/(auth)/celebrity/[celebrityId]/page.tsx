@@ -75,7 +75,7 @@ export default async function CelebrityPage({
     params: Promise<{ celebrityId: string }>;
 }) {
     const { celebrityId } = await params;
-    const celebProfile = await db.celebrities.read.id(celebrityId);
+    const celebProfile = await db.celebrities.select.id(celebrityId);
     if (!celebProfile) return <div>Profile not found</div>;
 
     return (
