@@ -46,13 +46,12 @@ export const Header = () => {
                         <Button
                             size={'lg'}
                             onClick={() => signOutMutation.mutate()}
+                            disabled={signOutMutation.isPending}
                         >
                             {signOutMutation.isPending ? (
                                 <Loader2Icon className="animate-spin" />
                             ) : null}
-                            {signOutMutation.isPending
-                                ? 'Signing out...'
-                                : 'Logout'}
+                            Logout
                         </Button>
                     ) : (
                         <Button size={'lg'}>

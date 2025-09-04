@@ -47,11 +47,11 @@ const Infos = (props: {
 export default async function ProfilePage({
     params,
 }: {
-    params: Promise<{ profileId: string }>;
+    params: Promise<{ celebrityId: string }>;
 }) {
-    const { profileId } = await params;
+    const { celebrityId } = await params;
     const celebProfile = await redis.read.celebrities.all().then((all) => {
-        return all.find((celeb) => celeb.id === profileId);
+        return all.find((celeb) => celeb.id === celebrityId);
     });
     if (!celebProfile) return <div>Profile not found</div>;
 

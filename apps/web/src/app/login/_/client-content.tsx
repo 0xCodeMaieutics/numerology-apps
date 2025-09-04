@@ -15,7 +15,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
 import { Loader2Icon } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -52,6 +52,7 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 export const ClientContent = () => {
+    const params = useSearchParams();
     const router = useRouter();
     const [loginType, setLoginType] = useState<'sign-up' | 'login'>('login');
     const { mutate: signInWithGoogle, isPending: isGooglePending } =
@@ -70,7 +71,7 @@ export const ClientContent = () => {
         });
 
     const { mutate: signInWithEmail, isPending: isEmailPending } = useMutation<
-        any,
+        {},
         Error,
         {
             email: string;
@@ -93,8 +94,12 @@ export const ClientContent = () => {
             });
         },
         onSuccess: () => {
-            console.log('success');
-            router.push('/');
+            const redirect = params.get('redirect');
+            if (redirect) {
+                router.push(redirect);
+            } else {
+                router.push('/');
+            }
         },
         onError: () => {
             toast('Failed to sign in with Email');
@@ -129,7 +134,7 @@ export const ClientContent = () => {
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className="w-full space-y-4"
+                    className="w-full px-3 space-y-4"
                 >
                     <FormField
                         control={form.control}
@@ -200,13 +205,13 @@ export const ClientContent = () => {
                 </form>
             </Form>
 
-            <div className="w-full flex items-center gap-2">
+            <div className="w-full px-3 flex items-center gap-2">
                 <Separator className="flex-1" />
                 <span>or</span>
                 <Separator className="flex-1" />
             </div>
 
-            <div className="w-full space-y-3">
+            <div className="w-full px-3 space-y-3">
                 <Button
                     variant={'secondary'}
                     onClick={() => {
