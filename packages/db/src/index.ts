@@ -46,6 +46,19 @@ export const db = {
           .from(celebritiesTable)
           .then((res) => res?.[0]?.count ?? 0),
     },
+    update: {
+      like: ({
+        celebrityId,
+        totalLikes,
+      }: {
+        celebrityId: string;
+        totalLikes: number;
+      }) =>
+        client
+          .update(celebritiesTable)
+          .set({ totalLikes: totalLikes })
+          .where(eq(celebritiesTable.id, celebrityId)),
+    },
   },
   user: {
     select: {

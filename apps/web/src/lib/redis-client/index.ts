@@ -11,6 +11,14 @@ export const redisClient = new Redis({
 const keys = {
     celebrities: {
         category: (category: string) => `celebrities:${category}`,
+        id: (id: string) => ({
+            default: `celebrities:${id}`,
+            users: {
+                id: (uid: string) => ({
+                    liked: `celebrities:${id}:users:${uid}:liked`,
+                }),
+            },
+        }),
     },
 };
 
@@ -25,44 +33,38 @@ export const redis = {
     client: redisClient,
     read: {
         celebrities: {
-            all: async () => {
-                const mmaPromise = redisClient.get<
-                    RedisTypes['celebrities']['category']['response']
-                >(keys.celebrities.category(Category.Mma));
-                const influencersPromise = redisClient.get<
-                    RedisTypes['celebrities']['category']['response']
-                >(keys.celebrities.category(Category.Influencers));
-                const politicsPromise = redisClient.get<
-                    RedisTypes['celebrities']['category']['response']
-                >(keys.celebrities.category(Category.Politics));
-                const footballPromise = redis.client.get<
-                    RedisTypes['celebrities']['category']['response']
-                >(keys.celebrities.category(Category.Football));
-
-                const [
-                    mma = [],
-                    influencers = [],
-                    politics = [],
-                    football = [],
-                ] = await Promise.all([
-                    mmaPromise,
-                    influencersPromise,
-                    politicsPromise,
-                    footballPromise,
-                ]);
-                const allCelebs = [
-                    ...(mma ? mma : []),
-                    ...(influencers ? influencers : []),
-                    ...(politics ? politics : []),
-                    ...(football ? football : []),
-                ];
-                return allCelebs.sort(() => 0.5 - Math.random());
-            },
             category: (category: string) => {
                 return redisClient.get<
                     RedisTypes['celebrities']['category']['response']
                 >(keys.celebrities.category(category));
             },
+
+            id: (cid: string) => ({
+                users: {
+                    id: (uid: string) => ({
+                        liked: () =>
+                            redisClient.get<boolean>(
+                                keys.celebrities.id(cid).users.id(uid).liked,
+                            ),
+                    }),
+                },
+            }),
+        },
+    },
+
+    write: {
+        celebrities: {
+            id: (cid: string) => ({
+                users: {
+                    id: (uid: string) => ({
+                        liked: (liked: boolean) =>
+                            redisClient.set(
+                                keys.celebrities.id(cid).users.id(uid).liked,
+                                liked,
+                            ),
+                    }),
+                },
+            }),
         },
     },
 };

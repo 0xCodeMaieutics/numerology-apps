@@ -7,6 +7,7 @@ import {
 } from '@workspace/ui/components/tooltip';
 import { numerology } from '@workspace/utils/numerology';
 import { ChevronLeft, Star } from 'lucide-react';
+import { headers } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -14,6 +15,9 @@ import { CommentSection } from '@/components/comment-section';
 import { Infos } from '@/components/infos';
 
 import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
+
+import { auth } from '@/lib/auth';
+import { redis } from '@/lib/redis-client';
 
 function CelebrityImage(props: {
     celebProfile: DBQueries['select']['celebrities'];
@@ -76,6 +80,17 @@ export default async function CelebrityPage({
 }) {
     const { celebrityId } = await params;
     const celebProfile = await db.celebrities.select.id(celebrityId);
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    const liked = session?.user
+        ? ((await redis.read.celebrities
+              .id(celebrityId)
+              .users.id(session.user.id)
+              .liked()) ?? false)
+        : false;
+
     if (!celebProfile) return <div>Profile not found</div>;
 
     return (
@@ -116,7 +131,7 @@ export default async function CelebrityPage({
                     <span>{celebProfile?.bio}</span>
                 </div>
 
-                <CommentSection celebProfile={celebProfile} />
+                <CommentSection liked={liked} celebProfile={celebProfile} />
             </div>
         </div>
     );
