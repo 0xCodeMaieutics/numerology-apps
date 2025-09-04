@@ -1,3 +1,4 @@
+import { db } from '@workspace/db';
 import {
     Card,
     CardDescription,
@@ -10,7 +11,13 @@ import { Stories } from '@/components/stories';
 
 import { redis } from '@/lib/redis-client';
 
-const WelcomeCard = ({ celebrityCount }: { celebrityCount: number }) => (
+const WelcomeCard = ({
+    celebrityCount,
+    userCount,
+}: {
+    celebrityCount: number;
+    userCount: number;
+}) => (
     <Card className="relative px-5 py-12 bg-transparent">
         <div className="w-full text-center sm:text-left sm:max-w-xl space-y-3">
             <CardTitle className="text-2xl font-semibold">
@@ -30,7 +37,7 @@ const WelcomeCard = ({ celebrityCount }: { celebrityCount: number }) => (
             </div>
             <div className="flex flex-col items-center sm:items-start">
                 <p className="text-sm">Users</p>
-                <p className="font-semibold">49,848</p>
+                <p className="font-semibold">{userCount}</p>
             </div>
         </div>
         <div className="absolute top-0 bottom-0 right-0 left-0 bg-background/70 -z-10"></div>
@@ -55,16 +62,12 @@ export default async function Page() {
     const influencerCelebs =
         await redis.read.celebrities.category('influencer');
 
-    const allCount =
-        (storiesCelebs?.length ?? 0) +
-        (mmaCelebs?.length ?? 0) +
-        (footballCelebs?.length ?? 0) +
-        (politicsCelebs?.length ?? 0) +
-        (influencerCelebs?.length ?? 0);
+    const celebCount = await db.celebrities.count();
+    const userCount = await db.user.count();
     return (
         <div className="w-full mx-auto max-w-3xl space-y-12">
             {storiesCelebs ? <Stories celebrities={storiesCelebs} /> : null}
-            <WelcomeCard celebrityCount={allCount} />
+            <WelcomeCard userCount={userCount} celebrityCount={celebCount} />
 
             <div className="space-y-2">
                 {politicsCelebs ? (

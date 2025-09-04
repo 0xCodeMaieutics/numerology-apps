@@ -5,6 +5,7 @@ import { accountTable } from "./db/schema/account";
 import { sessionTable } from "./db/schema/session";
 import { verificationTable } from "./db/schema/verification";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
+import { count } from "drizzle-orm";
 
 const client = drizzle({
   connection: {
@@ -33,6 +34,19 @@ export const db = {
           .where(eq(celebritiesTable.id, id))
           .limit(1)
           .then((res) => res[0]),
+    },
+    count: () =>
+      client
+        .select({ count: count() })
+        .from(celebritiesTable)
+        .then((res) => res?.[0]?.count ?? 0),
+  },
+  user: {
+    count: () => {
+      return client
+        .select({ count: count() })
+        .from(userTable)
+        .then((res) => res?.[0]?.count ?? 0);
     },
   },
 };
