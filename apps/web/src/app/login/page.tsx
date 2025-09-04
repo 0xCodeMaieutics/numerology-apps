@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import { Logo } from '@/components/logo';
 
 import { ClientContent } from './_/client-content';
@@ -13,7 +15,9 @@ export default function LoginPage() {
                     </div>
                 </h1>
             </div>
-            <ClientContent />
+            <Suspense fallback={<div></div>}>
+                <ClientContent />
+            </Suspense>
         </div>
     );
 }
