@@ -1,23 +1,38 @@
+'use client';
+
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
-import { Menu } from 'lucide-react';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import { Loader2Icon, Menu } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
+
+import { authClient } from '@/lib/auth-client';
+
+import { Logo } from './logo';
+
+const ButtonSkeleton = () => {
+    return (
+        <Skeleton className="h-12 w-[100px] bg-foreground/10 rounded-full" />
+    );
+};
 
 export const Header = () => {
+    const session = authClient.useSession();
+    const signOutMutation = useMutation({
+        mutationFn: () => authClient.signOut(),
+        onError: (error) => {
+            toast.error('Error signing out');
+        },
+    });
     return (
         <header className="fixed bg-background border-b z-50 top-0 left-0 right-0 p-4">
             <div className="w-full max-w-6xl flex gap-5 md:gap-0 items-center justify-between mx-auto">
-                <Link href="/" className="group">
-                    <span
-                        style={{
-                            fontFamily: 'MysteryQuest',
-                        }}
-                        className="text-3xl text-foreground/80 group-hover:text-foreground transition-colors duration-300"
-                    >
-                        33
-                    </span>
-                    <div className="relative bg-foreground/80 group-hover:bg-foreground transition-colors duration-300 bottom-1.5 w-full h-1" />
+                <Link href="/">
+                    <Logo />
                 </Link>
+
                 <div className="flex-1">
                     <Input
                         placeholder="Donald Trump"
@@ -25,17 +40,32 @@ export const Header = () => {
                     />
                 </div>
                 <div className="hidden md:flex gap-2">
-                    <Button size={'lg'}>Login</Button>
+                    {session.isPending ? (
+                        <ButtonSkeleton />
+                    ) : session.data ? (
+                        <Button
+                            size={'lg'}
+                            onClick={() => signOutMutation.mutate()}
+                        >
+                            {signOutMutation.isPending ? (
+                                <Loader2Icon className="animate-spin" />
+                            ) : null}
+                            {signOutMutation.isPending
+                                ? 'Signing out...'
+                                : 'Logout'}
+                        </Button>
+                    ) : (
+                        <Button size={'lg'}>
+                            <Link href={'/login'}>Login</Link>
+                        </Button>
+                    )}
+
                     <Button size={'lg'} variant={'secondary'}>
                         App
                     </Button>
                 </div>
                 <div className="block md:hidden">
-                    <button
-                        onClick={() => {
-                            // open the sheet
-                        }}
-                    >
+                    <button>
                         <Menu />
                     </button>
                 </div>
