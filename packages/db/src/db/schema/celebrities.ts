@@ -14,4 +14,6 @@ export const celebritiesTable = t.pgTable("celebrities", {
   imageUrl: t.text("image_url"),
   bio: t.text(),
   categories: t.text().array(),
+  totalLikes: t.integer("likes").default(0),
+  totalComments: t.integer("comments").default(0),
 });

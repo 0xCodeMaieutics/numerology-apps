@@ -3,8 +3,8 @@ import { format } from 'date-fns';
 
 const Info = (props: { value: string; label: string }) => (
     <div>
-        <span className="text-muted-foreground">{props.label}</span>{' '}
-        <span className="font-medium">{props.value}</span>
+        <span className="text-muted-foreground font-light">{props.label}</span>{' '}
+        <span className="font-semibold">{props.value}</span>
     </div>
 );
 
@@ -14,27 +14,24 @@ export const Infos = (props: {
     return (
         <div>
             <Info
-                label="Date of birth:"
+                label="Born on the"
                 value={format(
                     new Date(
                         props.celebProfile.birthYear,
                         props.celebProfile.birthMonth - 1,
                         props.celebProfile.birthDay,
                     ),
-                    'dd LLL, yyyy',
+                    'do LLL., yyyy',
                 )}
             />
             {props.celebProfile.nationality ? (
                 <Info
-                    label="Nationality:"
+                    label="Nationality is"
                     value={props.celebProfile.nationality}
                 />
             ) : null}
             {props.celebProfile.placeOfBirth ? (
-                <Info
-                    label="Place of Birth:"
-                    value={props.celebProfile.placeOfBirth}
-                />
+                <Info label="Born in" value={props.celebProfile.placeOfBirth} />
             ) : null}
         </div>
     );

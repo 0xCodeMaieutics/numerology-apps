@@ -1,4 +1,5 @@
 import { Analytics } from '@vercel/analytics/next';
+import { Toaster } from '@workspace/ui/components/sonner';
 import '@workspace/ui/globals.css';
 
 import { Providers } from '@/components/providers';
@@ -27,6 +28,7 @@ export default function RootLayout({
             <body className={'w-dvw h-dvh font-sans antialiased'}>
                 <Providers>{children}</Providers>
                 <Analytics />
+                <Toaster />
             </body>
         </html>
     );

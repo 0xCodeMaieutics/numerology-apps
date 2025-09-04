@@ -10,6 +10,7 @@ import { Bookmark, ChevronLeft, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { CommentSection } from '@/components/comment-section';
 import { Infos } from '@/components/infos';
 
 import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
@@ -120,6 +121,8 @@ export default async function CelebrityPage({
                     </span>
                     <span>{celebProfile?.bio}</span>
                 </div>
+
+                <CommentSection celebProfile={celebProfile} />
             </div>
         </div>
     );
