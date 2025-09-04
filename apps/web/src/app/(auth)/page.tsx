@@ -62,7 +62,7 @@ export default async function Page() {
         (politicsCelebs?.length ?? 0) +
         (influencerCelebs?.length ?? 0);
     return (
-        <div className="mx-auto max-w-3xl space-y-12">
+        <div className="w-full mx-auto max-w-3xl space-y-12">
             {storiesCelebs ? <Stories celebrities={storiesCelebs} /> : null}
             <WelcomeCard celebrityCount={allCount} />
 
