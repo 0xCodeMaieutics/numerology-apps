@@ -14,6 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
+import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
 import { navigation } from '@/utils/navigation';
 
 const StoryCard = (props: {
@@ -24,12 +25,6 @@ const StoryCard = (props: {
         props.celebrity.month.toString(),
         props.celebrity.year.toString(),
     );
-
-    const getMasterNumberTooltipText = (lifePath: number) => {
-        if (lifePath === 22 || lifePath === 33)
-            return `${lifePath} is a rare Master Number!`;
-        else if (lifePath === 11) return `${lifePath} is a Master Number!`;
-    };
 
     return (
         <Link href={navigation.celebrity.detail(props.celebrity.id)}>
@@ -54,7 +49,7 @@ const StoryCard = (props: {
                         <TooltipContent align="center" alignOffset={100}>
                             <span>
                                 This is the person&apos;s{' '}
-                                <span className="font-bold">
+                                <span className="font-semibold">
                                     Lifepath number
                                 </span>
                             </span>
@@ -69,9 +64,7 @@ const StoryCard = (props: {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent align="center" alignOffset={100}>
-                                <span>
-                                    {getMasterNumberTooltipText(lifePathNumber)}
-                                </span>
+                                {getMasterNumberTooltipElement(lifePathNumber)}
                             </TooltipContent>
                         </Tooltip>
                     )}

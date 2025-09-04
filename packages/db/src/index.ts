@@ -30,7 +30,26 @@ export const db = {
         client
           .select()
           .from(celebritiesTable)
-          .where(eq(celebritiesTable.id, id)),
+          .where(eq(celebritiesTable.id, id))
+          .limit(1)
+          .then((res) => res[0]),
     },
   },
+};
+
+export type DBQueries = {
+  select: {
+    celebrities: typeof celebritiesTable.$inferSelect;
+    user: typeof userTable.$inferSelect;
+    account: typeof accountTable.$inferSelect;
+    session: typeof sessionTable.$inferSelect;
+    verification: typeof verificationTable.$inferSelect;
+  };
+  insert: {
+    celebrities: typeof celebritiesTable.$inferInsert;
+    user: typeof userTable.$inferInsert;
+    account: typeof accountTable.$inferInsert;
+    session: typeof sessionTable.$inferInsert;
+    verification: typeof verificationTable.$inferInsert;
+  };
 };

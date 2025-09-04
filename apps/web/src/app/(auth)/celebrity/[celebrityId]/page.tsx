@@ -1,4 +1,4 @@
-import { RedisTypes } from '@/types/api/redis';
+import { DBQueries, db } from '@workspace/db';
 import {
     Tooltip,
     TooltipContent,
@@ -10,7 +10,7 @@ import { Bookmark, ChevronLeft, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { redis } from '@/lib/redis-client';
+import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
 
 const Info = (props: { value: string; label: string }) => (
     <div>
@@ -19,56 +19,53 @@ const Info = (props: { value: string; label: string }) => (
     </div>
 );
 
-const Infos = (props: {
-    celebProfile: RedisTypes['celebrities']['category']['response'][number];
-}) => {
+const Infos = (props: { celebProfile: DBQueries['select']['celebrities'] }) => {
     return (
         <div>
             <Info
                 label="Date of birth:"
                 value={format(
                     new Date(
-                        props.celebProfile.year,
-                        props.celebProfile.month - 1,
-                        props.celebProfile.day,
+                        props.celebProfile.birthYear,
+                        props.celebProfile.birthMonth - 1,
+                        props.celebProfile.birthDay,
                     ),
                     'dd LLL, yyyy',
                 )}
             />
-            <Info label="Nationality:" value={props.celebProfile.nationality} />
-            <Info
-                label="Place of Birth:"
-                value={props.celebProfile.place_of_birth}
-            />
+            {props.celebProfile.nationality ? (
+                <Info
+                    label="Nationality:"
+                    value={props.celebProfile.nationality}
+                />
+            ) : null}
+            {props.celebProfile.placeOfBirth ? (
+                <Info
+                    label="Place of Birth:"
+                    value={props.celebProfile.placeOfBirth}
+                />
+            ) : null}
         </div>
     );
 };
 
-export default async function ProfilePage({
+export default async function CelebrityPage({
     params,
 }: {
     params: Promise<{ celebrityId: string }>;
 }) {
     const { celebrityId } = await params;
-    const celebProfile = await redis.read.celebrities.all().then((all) => {
-        return all.find((celeb) => celeb.id === celebrityId);
-    });
+    const celebProfile = await db.celebrities.read.id(celebrityId);
     if (!celebProfile) return <div>Profile not found</div>;
 
     const lifePathNumber = numerology.calculateLifePath(
-        celebProfile.day.toString(),
-        celebProfile.month.toString(),
-        celebProfile.year.toString(),
+        celebProfile.birthDay.toString(),
+        celebProfile.birthMonth.toString(),
+        celebProfile.birthYear.toString(),
     );
 
-    const getMasterNumberTooltipText = (lifePath: number) => {
-        if (lifePath === 22 || lifePath === 33)
-            return `${lifePath} is a rare Master Number!`;
-        else if (lifePath === 11) return `${lifePath} is a Master Number!`;
-    };
-
     return (
-        <div className="min-h-svh w-full max-w-3xl mx-auto">
+        <div className="min-h-svh w-full max-w-3xl mx-auto space-y-4">
             <Link href="/" className="flex items-center gap-1.5">
                 <ChevronLeft />
                 <span className="font-semibold">Back</span>
@@ -77,17 +74,17 @@ export default async function ProfilePage({
             <div className="space-y-10">
                 <div className="flex gap-4">
                     <div className="relative">
-                        {celebProfile?.image_url ? (
+                        {celebProfile?.imageUrl ? (
                             <Image
-                                src={celebProfile?.image_url}
+                                src={celebProfile?.imageUrl}
                                 width={240}
                                 height={240}
                                 className="flex flex-col justify-center items-center shrink-0 size-32 md:size-[240px] rounded-lg object-cover"
                                 alt={`Photo of ${celebProfile?.name}`}
                             />
                         ) : null}
-                        <div className="absolute w-full flex justify-end top-0 px-2 py-1 sm:px-4 sm:py-2.5 bg-linear-to-b from-background to-transparent">
-                            {numerology.isMasterNumber(lifePathNumber) && (
+                        {numerology.isMasterNumber(lifePathNumber) && (
+                            <div className="absolute w-full flex justify-end top-0 px-2 py-1 sm:px-4 sm:py-2.5 bg-linear-to-b from-background to-transparent">
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex justify-center items-center size-8 sm:size-12 bg-foreground/30 rounded-full text-xs">
@@ -98,19 +95,17 @@ export default async function ProfilePage({
                                         align="center"
                                         alignOffset={100}
                                     >
-                                        <span>
-                                            {getMasterNumberTooltipText(
-                                                lifePathNumber,
-                                            )}
-                                        </span>
+                                        {getMasterNumberTooltipElement(
+                                            lifePathNumber,
+                                        )}
                                     </TooltipContent>
                                 </Tooltip>
-                            )}
-                        </div>
+                            </div>
+                        )}
                         <div className="absolute w-full flex bottom-0 px-4 py-2.5 bg-linear-to-t from-background to-transparent">
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <span className="text-2xl text-primary font-bold">
+                                    <span className="text-2xl md:text-3xl text-primary font-bold">
                                         {lifePathNumber}
                                     </span>
                                 </TooltipTrigger>
@@ -119,8 +114,10 @@ export default async function ProfilePage({
                                     alignOffset={100}
                                 >
                                     <span>
-                                        This is the person&apos;s Life path
-                                        number
+                                        This is the person&apos;s{' '}
+                                        <span className="font-semibold">
+                                            Lifepath number
+                                        </span>
                                     </span>
                                 </TooltipContent>
                             </Tooltip>

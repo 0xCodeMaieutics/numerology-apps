@@ -1,7 +1,6 @@
 'use client';
 
 import { RedisTypes } from '@/types/api/redis';
-import { navigation } from '@/utils/navigation';
 import { ScrollArea, ScrollBar } from '@workspace/ui/components/scroll-area';
 import {
     Tooltip,
@@ -12,6 +11,9 @@ import { cn } from '@workspace/ui/lib/utils';
 import { numerology } from '@workspace/utils/numerology';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+
+import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
+import { navigation } from '@/utils/navigation';
 
 const CategoryCard = (props: {
     celeb: RedisTypes['celebrities']['category']['response'][number];
@@ -29,15 +31,9 @@ const CategoryCard = (props: {
         props.celeb.year.toString(),
     );
 
-    const getMasterNumberTooltipText = (lifePath: number) => {
-        if (lifePath === 22 || lifePath === 33)
-            return `${lifePath} is a rare Master Number!`;
-        else if (lifePath === 11) return `${lifePath} is a Master Number!`;
-    };
-
     const content = (
-        <div className="relative flex text-left gap-2 p-2 pr-7">
-            <div className="relative flex items-center">
+        <div className="relative flex items-center text-left gap-2 px-2 pr-7">
+            <div className="relative flex justify-center items-center">
                 <Image
                     src={props.celeb.image_url}
                     width={70}
@@ -46,7 +42,7 @@ const CategoryCard = (props: {
                     alt={`Photo of ${props.celeb.name}`}
                 />
 
-                <div className="absolute w-full bg-linear-to-t from-background to-transparent flex flex-col left-0 bottom-0 pt-2 pb-2 pl-2">
+                <div className="absolute rounded-lg w-full bg-linear-to-t from-background to-transparent flex flex-col left-0 bottom-0 pt-2 pb-2 pl-2">
                     <p className="font-bold text-primary">
                         {numerology.calculateLifePath(
                             props.celeb.day.toString(),
@@ -57,7 +53,7 @@ const CategoryCard = (props: {
                 </div>
             </div>
             <div className="flex-1 flex flex-col justify-center gap-y-1 overflow-ellipsis">
-                <p className="text-lg font-semibold w-[70%] leading-5">
+                <p className="font-semibold w-[70%] leading-4">
                     {shortenedName}
                 </p>
                 <p className="text-xs">Zodiac: Tiger (Born in 1975)</p>
@@ -79,7 +75,7 @@ const CategoryCard = (props: {
                 router.push(navigation.celebrity.detail(props.celeb.id));
             }}
             className={cn(
-                'relative shrink-0 rounded-lg border max-w-xs overflow-hidden cursor-pointer hover:bg-foreground/10 transition-colors duration-150',
+                'h-20 flex items-center justify-center relative shrink-0 rounded-lg border max-w-xs overflow-hidden cursor-pointer hover:bg-foreground/10 transition-colors duration-150',
                 {
                     'border-primary': numerology.isMasterNumber(lifePathNumber),
                 },
@@ -87,9 +83,9 @@ const CategoryCard = (props: {
         >
             {numerology.isMasterNumber(lifePathNumber) ? (
                 <Tooltip>
-                    <TooltipTrigger className="">{content}</TooltipTrigger>
+                    <TooltipTrigger>{content}</TooltipTrigger>
                     <TooltipContent>
-                        {getMasterNumberTooltipText(lifePathNumber)}
+                        {getMasterNumberTooltipElement(lifePathNumber)}
                     </TooltipContent>
                 </Tooltip>
             ) : (
@@ -116,7 +112,7 @@ export const Categories = ({
         <div className="flex flex-col gap-3">
             <Title title={title} />
             <ScrollArea className="w-full rounded-md">
-                <div className="flex gap-4 mb-3">
+                <div className="flex items-center  gap-4 mb-3">
                     {celebrities.map((celeb) => (
                         <CategoryCard
                             key={celeb.id}
