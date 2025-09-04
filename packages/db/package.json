@@ -5,7 +5,7 @@
   "private": true,
   "exports": {
     "./src/db/*": "./src/db/*.ts",
-    "./*": "./src/index.ts"
+    ".": "./src/index.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^15.4.5",
