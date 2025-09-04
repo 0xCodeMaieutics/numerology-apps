@@ -6,7 +6,7 @@ import {
     TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
 import { numerology } from '@workspace/utils/numerology';
-import { Bookmark, ChevronLeft, Star } from 'lucide-react';
+import { ChevronLeft, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -93,12 +93,6 @@ export default async function CelebrityPage({
                             <span className="font-semibold text-lg sm:text-2xl">
                                 {celebProfile?.name}
                             </span>
-                            <button className="flex relative">
-                                <Bookmark className="text-primary" />
-                                <span className="absolute bg-background -top-1 -right-3 flex items-center justify-center">
-                                    <span className="text-xs">1.2k</span>
-                                </span>
-                            </button>
                         </div>
                         {celebProfile.categories &&
                         celebProfile.categories.length > 0 ? (

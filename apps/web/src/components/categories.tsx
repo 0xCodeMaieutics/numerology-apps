@@ -62,7 +62,7 @@ const CategoryCard = (props: {
                 </p>
             </div>
             <div className="absolute top-2 right-2 text-muted-foreground text-xs font-medium">
-                4k votes
+                4k likes
             </div>
         </div>
     );
