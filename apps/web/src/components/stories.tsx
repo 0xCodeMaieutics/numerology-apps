@@ -79,8 +79,6 @@ const StoryCard = (props: {
     );
 };
 
-const SCROLL_VALUE = 500;
-
 export const Stories = ({
     celebrities,
 }: {
@@ -137,7 +135,7 @@ export const Stories = ({
                 </div>
             </ScrollArea>
             <button
-                onClick={() => onLeftArrowClick(SCROLL_VALUE)}
+                onClick={() => onLeftArrowClick(window.innerWidth * 0.5)}
                 className={cn(
                     'absolute top-1/2 left-2 transform -translate-y-1/2 transition-opacity duration-300',
                     {
@@ -150,7 +148,7 @@ export const Stories = ({
                 </div>
             </button>
             <button
-                onClick={() => onRightArrowClick(SCROLL_VALUE)}
+                onClick={() => onRightArrowClick(window.innerWidth * 0.5)}
                 className={cn(
                     'absolute top-1/2 right-2 transform -translate-y-1/2 transition-opacity duration-150',
                     {
