@@ -43,6 +43,13 @@
       "when": 1757001068014,
       "tag": "0005_chunky_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1757399235437,
+      "tag": "0006_cultured_kingpin",
+      "breakpoints": true
     }
   ]
 }

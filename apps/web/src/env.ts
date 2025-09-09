@@ -16,6 +16,11 @@ export const env = createEnv({
 
         GOOGLE_CLIENT_ID: z.string(),
         GOOGLE_CLIENT_SECRET: z.string(),
+
+        // MONGO_DB_USERNAME: z.string(),
+        // MONGO_DB_PASSWORD: z.string(),
+        MONGO_DB_CONNECTION: z.string(),
+        // MONGO_DB_NAME: z.string(),
     },
     /*
      * Environment variables available on the client (and server).
@@ -39,6 +44,11 @@ export const env = createEnv({
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+
+        // MONGO_DB_USERNAME: process.env.MONGO_DB_USERNAME,
+        // MONGO_DB_PASSWORD: process.env.MONGO_DB_PASSWORD,
+        MONGO_DB_CONNECTION: process.env.MONGO_DB_CONNECTION,
+        // MONGO_DB_NAME: process.env.MONGO_DB_NAME,
     },
     // experimental__runtimeEnv: {
     //   NEXT_PUBLIC_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY,

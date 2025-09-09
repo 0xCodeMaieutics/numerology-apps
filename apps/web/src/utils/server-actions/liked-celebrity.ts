@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@workspace/db';
+import { sqlDB } from '@workspace/db/sql';
 
 import { redis } from '@/lib/redis-client';
 
@@ -17,7 +17,7 @@ export const likeCelebrity = async ({
 }) => {
     'use server';
     await Promise.all([
-        db.celebrities.update.like({
+        sqlDB.celebrities.update.like({
             celebrityId,
             totalLikes: oldLiked ? prevLikes - 1 : prevLikes + 1,
         }),

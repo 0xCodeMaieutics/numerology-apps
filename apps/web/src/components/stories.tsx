@@ -120,10 +120,6 @@ export const Stories = ({
                 viewportRef={scrollViewportRef}
                 onScrollCapture={(e) => {
                     if (!scrollViewportRef.current) return;
-                    console.log(
-                        'onscrollcapture',
-                        scrollViewportRef.current.scrollWidth,
-                    );
                     setScrollLeft(scrollViewportRef?.current?.scrollLeft);
                 }}
                 className="rounded-md"

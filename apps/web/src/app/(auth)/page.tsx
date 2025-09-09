@@ -1,4 +1,4 @@
-import { db } from '@workspace/db';
+import { sqlDB } from '@workspace/db/sql';
 import {
     Card,
     CardDescription,
@@ -58,7 +58,7 @@ const WelcomeCard = ({
 const REVALIDATE = 60 * 60; // 60 minutes
 
 const getUserCount = unstable_cache(
-    async () => db.user.select.count(),
+    async () => sqlDB.user.select.count(),
     ['user', 'count'],
     {
         revalidate: REVALIDATE,
@@ -73,7 +73,7 @@ enum CelebrityCategory {
 }
 
 const getCelebrityCount = unstable_cache(
-    async () => db.celebrities.select.count(),
+    async () => sqlDB.celebrities.select.count(),
     ['celebrities', 'count'],
     {
         revalidate: REVALIDATE,
@@ -89,7 +89,7 @@ const getStories = unstable_cache(
 );
 
 const getMMA = unstable_cache(
-    async () => db.celebrities.select.category(CelebrityCategory.Mma),
+    async () => sqlDB.celebrities.select.category(CelebrityCategory.Mma),
     ['celebrities', 'mma'],
     {
         revalidate: REVALIDATE,
@@ -97,7 +97,7 @@ const getMMA = unstable_cache(
 );
 
 const getFootball = unstable_cache(
-    async () => db.celebrities.select.category(CelebrityCategory.Football),
+    async () => sqlDB.celebrities.select.category(CelebrityCategory.Football),
     ['celebrities', 'football'],
     {
         revalidate: REVALIDATE,
@@ -105,7 +105,7 @@ const getFootball = unstable_cache(
 );
 
 const getPolitics = unstable_cache(
-    async () => db.celebrities.select.category(CelebrityCategory.Politics),
+    async () => sqlDB.celebrities.select.category(CelebrityCategory.Politics),
     ['celebrities', 'politics'],
     {
         revalidate: REVALIDATE,
@@ -113,7 +113,7 @@ const getPolitics = unstable_cache(
 );
 
 const getInfluencers = unstable_cache(
-    async () => db.celebrities.select.category(CelebrityCategory.Influencer),
+    async () => sqlDB.celebrities.select.category(CelebrityCategory.Influencer),
     ['celebrities', 'influencer'],
     {
         revalidate: REVALIDATE,
