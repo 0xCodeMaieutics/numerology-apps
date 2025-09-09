@@ -1,7 +1,6 @@
-#!/usr/bin/env node
 import "dotenv/config";
-import { db } from "@workspace/db";
-import { numerology } from "@workspace/utils/numerology";
+import { sqlDB } from "@workspace/db/sql";
+import { numerology } from "@workspace/utils";
 
 const seed = (cat: string) =>
   [
@@ -142,8 +141,8 @@ const seed = (cat: string) =>
 
 Array.from({ length: 10 }).forEach(async () => {
   const promises = seed("influencer").map((celb) => {
-    return db.client
-      .insert(db.schema.celebrities)
+    return sqlDB.client
+      .insert(sqlDB.schema.celebrities)
       .values({
         id: celb.id,
         name: celb.name,
@@ -167,6 +166,3 @@ Array.from({ length: 10 }).forEach(async () => {
 
   await Promise.all(promises);
 });
-
-// nvm use 23.9
-// chmod +x ./src/seed.ts
