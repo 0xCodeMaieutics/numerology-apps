@@ -8,7 +8,7 @@ import {
     TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
 import { cn } from '@workspace/ui/lib/utils';
-import { numerology } from '@workspace/utils/numerology';
+import { numerology } from '@workspace/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 

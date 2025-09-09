@@ -1,3 +1,5 @@
+import { alphabetNumbers } from "./constants/alphabet-numbers";
+
 const materialNumbers = Array.from({ length: 9 }, (_, i) => i + 1); // 1-9
 const monthNumbers = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12
 const yearNumbers = Array.from({ length: 2024 - 1900 + 1 }, (_, i) => i + 1900); // 1900-2024
@@ -50,14 +52,12 @@ export const numerology = {
         .split("")
         .reduce((acc, curr) => acc + parseInt(curr), 0);
     }
-    console.log({ yearSum, monthSum, daySum });
 
     let lifePathNumber = daySum + monthSum + yearSum;
     while (lifePathNumber > 9) {
       if (masterNumbers.includes(lifePathNumber)) {
         break;
       }
-      console.log({ lifePathNumber });
       lifePathNumber = lifePathNumber
         .toString()
         .split("")
@@ -74,7 +74,7 @@ export const numerology = {
     }
 
     let sum = day;
-    while (sum > 9) {
+    while (sum > 9 && !masterNumbers.includes(sum)) {
       sum = sum
         .toString()
         .split("")
@@ -83,7 +83,23 @@ export const numerology = {
     return sum;
   },
 
-  isMasterNumber: (number: number) => {
-    return masterNumbers.includes(number);
+  isMasterNumber: (number: number) => masterNumbers.includes(number),
+  calculateNameNumber: (name: string) => {
+    let sum = name
+      .split("")
+      .reduce(
+        (acc, curr) => acc + (alphabetNumbers[curr.toLowerCase()] ?? 0),
+        0
+      );
+    while (sum > 9 && !masterNumbers.includes(sum)) {
+      sum = sum
+        .toString()
+        .split("")
+        .reduce((acc, curr) => acc + parseInt(curr), 0);
+    }
+    if (![...materialNumbers, ...masterNumbers].includes(sum)) {
+      throw new Error("Invalid name number");
+    }
+    return sum;
   },
 };

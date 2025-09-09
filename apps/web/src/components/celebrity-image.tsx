@@ -1,9 +1,14 @@
-import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
 import { SQLDBQueries } from '@workspace/db/sql';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip';
-import { numerology } from '@workspace/utils/numerology';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@workspace/ui/components/tooltip';
+import { numerology } from '@workspace/utils';
 import { Star } from 'lucide-react';
 import Image from 'next/image';
+
+import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
 
 export const CelebrityImage = (props: {
     celebProfile: SQLDBQueries['select']['celebrities'];
