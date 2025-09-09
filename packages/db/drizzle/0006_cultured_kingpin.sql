@@ -1,0 +1,1 @@
+ALTER TABLE "celebrities" DROP COLUMN "comments";

@@ -1,12 +1,12 @@
 import { env } from '@/env';
-import { db } from '@workspace/db';
+import { sqlDB } from '@workspace/db/sql';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
 export const auth = betterAuth({
-    database: drizzleAdapter(db.client, {
+    database: drizzleAdapter(sqlDB.client, {
         provider: 'pg',
-        schema: db.schema,
+        schema: sqlDB.schema,
     }),
     emailAndPassword: {
         enabled: true,

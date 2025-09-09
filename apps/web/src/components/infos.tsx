@@ -1,4 +1,4 @@
-import { DBQueries } from '@workspace/db';
+import { SQLDBQueries } from '@workspace/db/sql';
 import { format } from 'date-fns';
 
 const Info = (props: { value: string; label: string }) => (
@@ -9,7 +9,7 @@ const Info = (props: { value: string; label: string }) => (
 );
 
 export const Infos = (props: {
-    celebProfile: DBQueries['select']['celebrities'];
+    celebProfile: SQLDBQueries['select']['celebrities'];
 }) => {
     return (
         <div>

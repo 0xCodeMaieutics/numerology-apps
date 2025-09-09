@@ -1,6 +1,6 @@
 'use client';
 
-import { DBQueries } from '@workspace/db';
+import { SQLDBQueries } from '@workspace/db/sql';
 import { ScrollArea, ScrollBar } from '@workspace/ui/components/scroll-area';
 import {
     Tooltip,
@@ -17,7 +17,7 @@ import { navigation } from '@/utils/navigation';
 
 const SHORTEN_NAME_LENGTH = 15;
 const CategoryCard = (props: {
-    celeb: DBQueries['select']['celebrities'];
+    celeb: SQLDBQueries['select']['celebrities'];
     category: string;
 }) => {
     const router = useRouter();
@@ -111,7 +111,7 @@ export const Categories = ({
     title = 'Title',
     category = '',
 }: {
-    celebrities: DBQueries['select']['celebrities'][];
+    celebrities: SQLDBQueries['select']['celebrities'][];
     title?: string;
     category?: string;
 }) => {

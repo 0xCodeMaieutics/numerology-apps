@@ -1,20 +1,20 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { celebritiesTable } from "./db/schema/celebrities";
-import { userTable } from "./db/schema/user";
-import { accountTable } from "./db/schema/account";
-import { sessionTable } from "./db/schema/session";
-import { verificationTable } from "./db/schema/verification";
+import { celebritiesTable } from "./sql/schema/celebrities";
+import { userTable } from "./sql/schema/user";
+import { accountTable } from "./sql/schema/account";
+import { sessionTable } from "./sql/schema/session";
+import { verificationTable } from "./sql/schema/verification";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { count, sql } from "drizzle-orm";
 
-const client = drizzle({
+const sqlClient = drizzle({
   connection: {
     connectionString: process.env.DATABASE_URL!,
     ...(Boolean(process.env.DATABASE_SSL_ENABLED) ? { ssl: true } : {}),
   },
 });
 
-const schema = {
+export const sqlSchema = {
   celebrities: celebritiesTable,
   user: userTable,
   account: accountTable,
@@ -22,26 +22,28 @@ const schema = {
   verification: verificationTable,
 };
 
-export const db = {
-  client,
-  schema,
+export const sqlDB = {
+  client: sqlClient,
+  schema: sqlSchema,
   celebrities: {
     select: {
+      all: (limit = 10, offset = 0) =>
+        sqlClient.select().from(celebritiesTable).limit(limit).offset(offset),
       id: (id: string) =>
-        client
+        sqlClient
           .select()
           .from(celebritiesTable)
           .where(eq(celebritiesTable.id, id))
           .limit(1)
           .then((res) => res[0]),
       category: (category: string, limit = 10) =>
-        client
+        sqlClient
           .select()
           .from(celebritiesTable)
           .where(sql`${category}::text = ANY (${celebritiesTable.categories})`)
           .limit(limit),
       count: () =>
-        client
+        sqlClient
           .select({ count: count() })
           .from(celebritiesTable)
           .then((res) => res?.[0]?.count ?? 0),
@@ -54,25 +56,26 @@ export const db = {
         celebrityId: string;
         totalLikes: number;
       }) =>
-        client
+        sqlClient
           .update(celebritiesTable)
-          .set({ totalLikes: totalLikes })
+          .set({
+            totalLikes,
+          })
           .where(eq(celebritiesTable.id, celebrityId)),
     },
   },
   user: {
     select: {
-      count: () => {
-        return client
+      count: () =>
+        sqlClient
           .select({ count: count() })
           .from(userTable)
-          .then((res) => res?.[0]?.count ?? 0);
-      },
+          .then((res) => res?.[0]?.count ?? 0),
     },
   },
 };
 
-export type DBQueries = {
+export type SQLDBQueries = {
   select: {
     celebrities: typeof celebritiesTable.$inferSelect;
     user: typeof userTable.$inferSelect;
