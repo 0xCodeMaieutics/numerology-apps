@@ -12,9 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "@workspace/db": "workspace:*",
-    "@workspace/utils": "workspace:*"
+    "@workspace/utils": "workspace:*",
+    "drizzle-orm": "^0.44.5"
   },
   "devDependencies": {
+    "dotenv": "^17.2.2",
     "tsx": "^4.20.5"
   }
 }
