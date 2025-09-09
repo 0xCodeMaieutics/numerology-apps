@@ -1,12 +1,13 @@
 'use server';
 
+import { queryKeys } from '@/hooks/queries';
 import { ICelebrityCommentWrite, nosqlDB } from '@workspace/db/nosql';
-import { revalidatePath } from 'next/cache';
+import { revalidateTag } from 'next/cache';
 
 export const commentServerAction = async (comment: ICelebrityCommentWrite) => {
     'use server';
     await nosqlDB.models.CelebrityComment.createTopLevel({
         ...comment,
     });
-    revalidatePath(`/celebrity/${comment.celebrityId}`);
+    revalidateTag(queryKeys.comments(comment.celebrityId as string).join('/'));
 };

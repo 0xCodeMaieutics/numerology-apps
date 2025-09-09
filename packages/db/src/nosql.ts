@@ -82,76 +82,92 @@ export const nosqlDB = {
           sortBy = { createdAt: "desc", replyCreatedAt: "desc" },
         } = options;
 
-        return CelebrityComment.aggregate([
-          {
-            $match: {
-              celebrityId: new Types.ObjectId(celebrityId),
-              parentId: null,
-            },
-          },
-          { $sort: { createdAt: sortBy.createdAt === "asc" ? 1 : -1 } },
-          { $skip: skip },
-          { $limit: limit },
-          {
-            $lookup: {
-              from: "celebrity_comments",
-              let: { commentId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ["$parentId", "$$commentId"] },
-                  },
-                },
-                {
-                  $sort: {
-                    createdAt: sortBy.replyCreatedAt === "asc" ? 1 : -1,
-                  },
-                },
-                { $skip: replySkip },
-                { $limit: replyLimit },
-              ],
-              as: "replies",
-            },
-          },
-          {
-            $lookup: {
-              from: "celebrity_comments",
-              let: { commentId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ["$parentId", "$$commentId"] },
-                  },
-                },
-                { $count: "total" },
-              ],
-              as: "replyCountResult",
-            },
-          },
-          {
-            $addFields: {
-              replyCount: {
-                $ifNull: [{ $arrayElemAt: ["$replyCountResult.total", 0] }, 0],
+        return (
+          await CelebrityComment.aggregate([
+            {
+              $match: {
+                celebrityId: new Types.ObjectId(celebrityId),
+                parentId: null,
               },
-              hasMoreReplies: {
-                $gt: [
+            },
+            { $sort: { createdAt: sortBy.createdAt === "asc" ? 1 : -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "celebrity_comments",
+                let: { commentId: "$_id" },
+                pipeline: [
                   {
-                    $ifNull: [
-                      { $arrayElemAt: ["$replyCountResult.total", 0] },
-                      0,
-                    ],
+                    $match: {
+                      $expr: { $eq: ["$parentId", "$$commentId"] },
+                    },
                   },
-                  { $add: [replySkip, replyLimit] },
+                  {
+                    $sort: {
+                      createdAt: sortBy.replyCreatedAt === "asc" ? 1 : -1,
+                    },
+                  },
+                  { $skip: replySkip },
+                  { $limit: replyLimit },
                 ],
+                as: "replies",
               },
             },
-          },
-          {
-            $project: {
-              replyCountResult: 0,
+            {
+              $lookup: {
+                from: "celebrity_comments",
+                let: { commentId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ["$parentId", "$$commentId"] },
+                    },
+                  },
+                  { $count: "total" },
+                ],
+                as: "replyCountResult",
+              },
             },
-          },
-        ]);
+            {
+              $addFields: {
+                replyCount: {
+                  $ifNull: [
+                    { $arrayElemAt: ["$replyCountResult.total", 0] },
+                    0,
+                  ],
+                },
+                hasMoreReplies: {
+                  $gt: [
+                    {
+                      $ifNull: [
+                        { $arrayElemAt: ["$replyCountResult.total", 0] },
+                        0,
+                      ],
+                    },
+                    { $add: [replySkip, replyLimit] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                replyCountResult: 0,
+              },
+            },
+          ])
+        ).map((doc) => ({
+          ...doc,
+          _id: doc._id.toString(),
+          celebrityId: doc.celebrityId.toString(),
+          parentId: doc.parentId ? doc.parentId.toString() : null,
+          replies: doc.replies.map((reply: any) => ({
+            ...reply,
+            _id: reply._id.toString(),
+            celebrityId: reply.celebrityId.toString(),
+            parentId: reply.parentId ? reply.parentId.toString() : null,
+          })),
+        }));
       },
     },
   },

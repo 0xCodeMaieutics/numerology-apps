@@ -74,7 +74,9 @@ export const queryHooks = {
                 queryFn: () =>
                     fetch(
                         `${frontendDomain}/api/celebrity/${celebrityId}/comments-count`,
-                    ).then((res) => res.json().then((data) => data.count as number)),
+                    ).then((res) =>
+                        res.json().then((data) => data.count as number),
+                    ),
             }),
     },
 };

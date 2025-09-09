@@ -17,7 +17,7 @@ import { auth } from '@/lib/auth';
 import { getQueryClient } from '@/lib/react-query';
 import { redis } from '@/lib/redis-client';
 
-const REVALIDATE = isDevelopment ? 0 : 60 * 10; // 10 minutes
+const REVALIDATE = isDevelopment ? 60 * 10 : 60 * 10; // 10 minutes
 
 const getComments = (celebrityId: string) =>
     unstable_cache(
@@ -33,6 +33,20 @@ const getComments = (celebrityId: string) =>
         queryKeys.comments(celebrityId),
         {
             revalidate: REVALIDATE,
+            tags: [queryKeys.comments(celebrityId).join('/')],
+        },
+    );
+
+const getCommentsCount = (celebrityId: string) =>
+    unstable_cache(
+        (celebrityId: string) =>
+            nosqlDB.models.CelebrityComment.getCommentAndRepliesCount(
+                celebrityId,
+            ),
+        queryKeys.celebrity(celebrityId).commentsCount,
+        {
+            revalidate: REVALIDATE,
+            tags: [queryKeys.comments(celebrityId).join('/')],
         },
     );
 
@@ -73,11 +87,6 @@ export default async function CelebrityPage({
     });
     const celebProfile = await sqlDB.celebrities.select.id(celebrityId);
 
-    const totalCommentsCount =
-        await nosqlDB.models.CelebrityComment.getCommentAndRepliesCount(
-            celebrityId,
-        );
-
     await Promise.all([
         queryClient.prefetchQuery({
             queryKey: queryKeys.comments(celebrityId),
@@ -98,10 +107,9 @@ export default async function CelebrityPage({
             queryKey: queryKeys.celebrity(celebrityId).default,
             queryFn: () => celebProfile,
         }),
-
         queryClient.prefetchQuery({
             queryKey: queryKeys.celebrity(celebrityId).commentsCount,
-            queryFn: async () => totalCommentsCount,
+            queryFn: () => getCommentsCount(celebrityId)(celebrityId),
         }),
     ]);
     if (!celebProfile) return <div>Profile not found</div>;
