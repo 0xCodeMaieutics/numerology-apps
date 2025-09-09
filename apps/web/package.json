@@ -13,7 +13,7 @@
         "format": "prettier --write src/**/*.{ts,tsx}",
         "format:check": "pnpm prettier --check \"./src/**/*.{ts,tsx,mdx}\" --cache"
     },
-    "peerDependencies": {
+    "dependencies": {
         "@hookform/resolvers": "^5.2.1",
         "@t3-oss/env-nextjs": "^0.13.8",
         "@tanstack/react-query": "^5.85.6",
