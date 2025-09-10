@@ -80,28 +80,39 @@ export default async function CelebrityPage({
     params: Promise<{ celebrityId: string }>;
 }) {
     const { celebrityId } = await params;
+    if (!celebrityId) return <div>Profile not found</div>;
     const queryClient = getQueryClient();
 
     const session = await auth.api.getSession({
         headers: await headers(),
     });
     const celebProfile = await sqlDB.celebrities.select.id(celebrityId);
+    if (!celebProfile) return <div>Profile not found</div>;
 
     await Promise.all([
+        queryClient.prefetchQuery({
+            queryKey: queryKeys.auth(session?.user?.id ?? 'user-not-logged-in')
+                .session,
+            queryFn: () => session,
+        }),
         queryClient.prefetchQuery({
             queryKey: queryKeys.comments(celebrityId),
             queryFn: () => getComments(celebrityId)(celebrityId),
         }),
         queryClient.prefetchQuery({
-            queryKey: queryKeys.liked(celebrityId, session?.user?.id),
-            queryFn: async () => ({
-                liked: session?.user
-                    ? ((await redis.read.celebrities
-                          .id(celebrityId)
-                          .users.id(session.user.id)
-                          .liked()) ?? false)
-                    : false,
-            }),
+            queryKey: queryKeys
+                .celebrity(celebrityId)
+                .users(session?.user?.id)
+                .liked(),
+            queryFn: async () => {
+                if (!session?.user) {
+                    return { liked: false };
+                }
+                return redis.read.celebrities
+                    .id(celebrityId)
+                    .users.id(session?.user?.id)
+                    .liked();
+            },
         }),
         queryClient.prefetchQuery({
             queryKey: queryKeys.celebrity(celebrityId).default,
@@ -112,7 +123,6 @@ export default async function CelebrityPage({
             queryFn: () => getCommentsCount(celebrityId)(celebrityId),
         }),
     ]);
-    if (!celebProfile) return <div>Profile not found</div>;
 
     return (
         <div className="w-full max-w-3xl mx-auto space-y-4">
@@ -139,7 +149,10 @@ export default async function CelebrityPage({
                 </div>
                 <Bio bio={celebProfile?.bio} />
                 <HydrationBoundary state={dehydrate(queryClient)}>
-                    <CommentSection celebProfile={celebProfile} />
+                    <CommentSection
+                        celebrityId={celebrityId}
+                        userId={session?.user.id}
+                    />
                 </HydrationBoundary>
             </div>
         </div>

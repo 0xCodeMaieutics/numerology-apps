@@ -42,10 +42,15 @@ export const redis = {
             id: (cid: string) => ({
                 users: {
                     id: (uid: string) => ({
-                        liked: () =>
-                            redisClient.get<boolean>(
-                                keys.celebrities.id(cid).users.id(uid).liked,
-                            ),
+                        liked: (): Promise<{ liked: boolean }> =>
+                            redisClient
+                                .get<boolean>(
+                                    keys.celebrities.id(cid).users.id(uid)
+                                        .liked,
+                                )
+                                .then((res) => ({
+                                    liked: res ?? false,
+                                })),
                     }),
                 },
             }),

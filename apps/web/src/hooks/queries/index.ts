@@ -2,23 +2,45 @@ import { frontendDomain } from '@/constants';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ICelebrityComment, NoSQLQueries } from '@workspace/db/nosql';
 import { SQLDBQueries } from '@workspace/db/sql';
+import 'better-auth';
+
+import { authClient } from '@/lib/auth-client';
 
 export const queryKeys = {
     comments: (celebrityId: string) => ['comments', celebrityId],
-    liked: (celebrityId: string, userId?: string) => [
-        'liked',
-        celebrityId,
-        userId,
-    ],
-
+    auth: (userId?: string) => ({
+        session: ['auth', 'session', userId ?? 'user-not-logged-in'],
+    }),
     celebrity: (celebrityId: string) => ({
         default: ['celebrity', celebrityId],
         commentsCount: ['celebrity', celebrityId, 'commentsCount'],
+        users: (userId?: string) => ({
+            liked: () => [
+                'celebrity',
+                celebrityId,
+                'users',
+                userId ?? 'user-not-logged-in',
+                'liked',
+            ],
+        }),
     }),
 };
 
 export const queryHooks = {
     suspense: {
+        useAuthSession: (userId?: string) =>
+            useSuspenseQuery<
+                unknown,
+                Error,
+                typeof authClient.$Infer.Session | null
+            >({
+                queryKey: queryKeys.auth(userId).session,
+                queryFn: () =>
+                    authClient.getSession().then((res) => {
+                        if (res.error) throw new Error(res.error.message);
+                        return res.data;
+                    }),
+            }),
         useComments: (celebrityId: string) =>
             useSuspenseQuery<
                 unknown,
@@ -38,16 +60,16 @@ export const queryHooks = {
             celebrityId: string;
             userId?: string;
         }) =>
-            useSuspenseQuery<unknown, Error, false>({
-                queryKey: queryKeys.liked(celebrityId, userId),
-                queryFn: () =>
-                    userId
-                        ? fetch(
-                              `${frontendDomain}/api/liked/${celebrityId}/${userId}`,
-                          ).then((res) =>
-                              res.json().then((data) => data.liked as boolean),
-                          )
-                        : { liked: false },
+            useSuspenseQuery<unknown, Error, { liked: boolean }>({
+                queryKey: queryKeys
+                    .celebrity(celebrityId)
+                    .users(userId)
+                    .liked(),
+                queryFn: () => {
+                    return fetch(
+                        `${frontendDomain}/api/liked/${celebrityId}/${userId}`,
+                    ).then((res) => res.json() as Promise<{ liked: boolean }>);
+                },
             }),
 
         useCelebrity: (celebrityId: string) =>
