@@ -7,6 +7,7 @@ export const CommentContent = (props: {
     comment: ICelebrityCommentBase;
     likes: number;
     onReply?: () => void;
+    onLike?: () => void;
 }) => (
     <div>
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -33,7 +34,10 @@ export const CommentContent = (props: {
                 <MessageCircle className="size-4" />
                 <span>reply</span>
             </button>
-            <button className="flex items-center gap-0.5 text-muted-foreground font-semibold text-sm">
+            <button
+                onClick={props.onLike}
+                className="flex items-center gap-0.5 text-muted-foreground font-semibold text-sm"
+            >
                 <Heart className="size-4" />
                 <span>like {props.likes}</span>
             </button>

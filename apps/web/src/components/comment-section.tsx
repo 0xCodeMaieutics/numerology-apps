@@ -46,10 +46,8 @@ export const CommentSection = ({
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
 
     const onReplyHandler = async () => {
-        if (!session) {
-            setOpen(true);
-            return;
-        }
+        if (!session) return;
+
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
         await replyServerAction({
@@ -140,6 +138,13 @@ export const CommentSection = ({
         });
     };
 
+    const onReplyCommentLikeHandler = () => {
+        if (!session) {
+            setOpen(true);
+            return;
+        }
+    };
+
     return (
         <>
             <div className="flex items-center gap-1.5">
@@ -194,8 +199,13 @@ export const CommentSection = ({
                                 className="space-y-4 border border-border rounded-xl p-4"
                             >
                                 <CommentContent
+                                    onLike={onReplyCommentLikeHandler}
                                     likes={comment.likes}
                                     onReply={async () => {
+                                        if (!session) {
+                                            setOpen(true);
+                                            return;
+                                        }
                                         const replyEl = replyTextarea.current;
                                         setReplyCommentId(
                                             comment._id.toString(),
@@ -225,7 +235,14 @@ export const CommentSection = ({
                                     <div className="flex flex-col gap-4">
                                         {comment.replies?.map((reply) => (
                                             <CommentContent
+                                                onLike={
+                                                    onReplyCommentLikeHandler
+                                                }
                                                 onReply={async () => {
+                                                    if (!session) {
+                                                        setOpen(true);
+                                                        return;
+                                                    }
                                                     const replyEl =
                                                         replyTextarea.current;
                                                     setReplyCommentId(
@@ -266,20 +283,18 @@ export const CommentSection = ({
                                         <div className="mt-2">
                                             <CommentTextarea
                                                 ref={replyTextarea}
+                                                disabled={!session}
                                                 onKeyDown={(e) => {
                                                     if (
                                                         e.key === 'Enter' &&
                                                         e.altKey
-                                                    ) {
+                                                    )
                                                         onReplyHandler();
-                                                    }
                                                 }}
-                                                onCancel={() => {
-                                                    setReplyCommentId(null);
-                                                }}
-                                                onSend={() => {
-                                                    onReplyHandler();
-                                                }}
+                                                onCancel={() =>
+                                                    setReplyCommentId(null)
+                                                }
+                                                onSend={onReplyHandler}
                                                 placeholder="Write a comment..."
                                             />
                                         </div>
