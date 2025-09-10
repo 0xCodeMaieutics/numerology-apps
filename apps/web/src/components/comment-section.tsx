@@ -2,7 +2,6 @@
 
 import { queryHooks, queryKeys } from '@/hooks/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { SQLDBQueries } from '@workspace/db/sql';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
@@ -14,8 +13,6 @@ import { commentServerAction } from '@/utils/server-actions/comment';
 import { likeCelebrity } from '@/utils/server-actions/liked-celebrity';
 import { replyServerAction } from '@/utils/server-actions/reply';
 import { sleep } from '@/utils/sleep';
-
-import { authClient } from '@/lib/auth-client';
 
 import { CommentContent } from './comment-content';
 import { EmptyComments } from './empty-comments';
@@ -63,19 +60,21 @@ const CommentTextarea = ({
 };
 
 export const CommentSection = ({
-    celebProfile,
+    celebrityId,
+    userId,
 }: {
-    celebProfile: SQLDBQueries['select']['celebrities'];
+    celebrityId: string;
+    userId?: string;
 }) => {
-    const { data: celebrity } = queryHooks.suspense.useCelebrity(
-        celebProfile.id,
-    );
+    const { data: celebProfile } =
+        queryHooks.suspense.useCelebrity(celebrityId);
+    const { data: session } = queryHooks.suspense.useAuthSession(userId);
+
     const queryClient = useQueryClient();
     const { data: liked } = queryHooks.suspense.useLiked({
         celebrityId: celebProfile.id,
-        userId: authClient.useSession().data?.user.id as string,
+        userId: session?.user.id as string,
     });
-
     const [replyCommentId, setReplyCommentId] = useState<string | null>(null);
 
     const { data: commentsCount } =
@@ -84,16 +83,14 @@ export const CommentSection = ({
     const textarea = useRef<HTMLTextAreaElement>(null);
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
 
-    const session = authClient.useSession();
-
     const onReplyHandler = async () => {
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        if (!session.data) return;
+        if (!session) return;
         await replyServerAction({
-            author: session.data.user.name || 'Anonymous',
+            author: session.user.name || 'Anonymous',
             parentId: replyCommentId as string,
-            authorId: session.data?.user.id,
+            authorId: session?.user.id,
             celebrityId: celebProfile.id,
             comment: value,
             likes: 0,
@@ -112,47 +109,50 @@ export const CommentSection = ({
         });
     };
 
-    const onCommentLikeHandler = async () => {
-        if (!session.data) return;
-        queryClient.setQueryData(
-            queryKeys.liked(celebProfile.id, session.data.user.id),
-            !liked,
-        );
+    const onLikeHandler = async () => {
+        if (!session) return;
+        const userLikedKey = queryKeys
+            .celebrity(celebProfile.id)
+            .users(session.user.id)
+            .liked();
+        const celebKey = queryKeys.celebrity(celebProfile.id).default;
+        queryClient.setQueryData<{ liked: boolean }>(userLikedKey, (liked) => ({
+            liked: liked ? !liked.liked : false,
+        }));
 
-        queryClient.setQueryData(queryKeys.celebrity(celebProfile.id).default, {
-            ...celebrity,
-            totalLikes: (celebrity?.totalLikes ?? 0) + (liked ? -1 : 1),
+        queryClient.setQueryData(celebKey, {
+            ...celebProfile,
+            totalLikes:
+                (celebProfile?.totalLikes ?? 0) + (liked.liked ? -1 : 1),
         });
         try {
             await likeCelebrity({
                 celebrityId: celebProfile.id,
                 prevLikes: celebProfile.totalLikes ?? 0,
-                oldLiked: liked,
-                userId: session.data.user.id,
+                oldLiked: liked.liked,
+                userId: session.user.id,
             });
         } catch (err) {
             toast.error('Something went wrong');
-            queryClient.setQueryData(
-                queryKeys.liked(celebProfile.id, session.data.user.id),
-                liked,
+            queryClient.setQueryData<{ liked: boolean }>(
+                userLikedKey,
+                (liked) => ({ liked: liked ? !liked.liked : false }),
             );
-            queryClient.setQueryData(
-                queryKeys.celebrity(celebProfile.id).default,
-                {
-                    ...celebrity,
-                    totalLikes: (celebrity?.totalLikes ?? 0) + (liked ? -1 : 1),
-                },
-            );
+            queryClient.setQueryData(celebKey, {
+                ...celebProfile,
+                totalLikes:
+                    (celebProfile?.totalLikes ?? 0) + (liked.liked ? -1 : 1),
+            });
         }
     };
 
     const onCommentHandler = async () => {
         const value = textarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        if (!session.data) return;
+        if (!session) return;
         await commentServerAction({
-            author: session.data.user.name || 'Anonymous',
-            authorId: session.data.user.id,
+            author: session.user.name || 'Anonymous',
+            authorId: session.user.id,
             celebrityId: celebProfile.id,
             comment: value ?? '',
             likes: 0,
@@ -174,17 +174,17 @@ export const CommentSection = ({
             <div className="flex items-center gap-1.5">
                 <Button
                     onClick={async () => {
-                        onCommentLikeHandler();
+                        onLikeHandler();
                     }}
                     variant={'secondary'}
                 >
                     <Heart
                         className={cn({
-                            'fill-red-600 stroke-red-600': liked,
+                            'fill-red-600 stroke-red-600': liked.liked,
                         })}
                     />
                     <span>Like</span>
-                    <span>{celebrity.totalLikes}</span>
+                    <span>{celebProfile.totalLikes}</span>
                 </Button>
                 <Button
                     onClick={() => {
@@ -210,7 +210,7 @@ export const CommentSection = ({
 
             <CommentTextarea
                 ref={textarea}
-                disabled={!session.data}
+                disabled={!session}
                 onKeyDown={async (e) => {
                     if (e.key === 'Enter' && e.altKey) onCommentHandler();
                 }}

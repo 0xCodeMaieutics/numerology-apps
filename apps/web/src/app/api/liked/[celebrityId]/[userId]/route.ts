@@ -15,12 +15,11 @@ export const GET = async (
         const result = await redis.read.celebrities
             .id(celebrityId)
             .users.id(userId)
-            .liked()
-            .then((res) => res ?? false);
+            .liked();
 
         return new Response(
             JSON.stringify({
-                liked: result,
+                ...result,
             }),
             {
                 status: 200,
