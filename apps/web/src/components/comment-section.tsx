@@ -15,7 +15,7 @@ import { replyServerAction } from '@/utils/server-actions/reply';
 import { sleep } from '@/utils/sleep';
 
 import { CommentContent } from './comment-content';
-import { CommentTextarea } from './comment-text-area';
+import { CommentTextarea } from './comment-textarea';
 import { EmptyComments } from './empty-comments';
 import { LoginRequiredAlertDialog } from './login-required-alert-dialog';
 
