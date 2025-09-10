@@ -6,7 +6,7 @@ import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
 import { Heart, MessageCircle, Share } from 'lucide-react';
-import { ComponentPropsWithRef, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { commentServerAction } from '@/utils/server-actions/comment';
@@ -15,49 +15,9 @@ import { replyServerAction } from '@/utils/server-actions/reply';
 import { sleep } from '@/utils/sleep';
 
 import { CommentContent } from './comment-content';
+import { CommentTextarea } from './comment-textarea';
 import { EmptyComments } from './empty-comments';
-
-const CommentTextarea = ({
-    onCancel,
-    onSend,
-    ...props
-}: ComponentPropsWithRef<'textarea'> & {
-    onCancel?: () => void;
-    onSend?: () => void;
-}) => {
-    return (
-        <div className="relative flex flex-col gap-1.5 border-input dark:bg-input/30 w-full rounded-md border bg-transparent px-3 py-4 text-base shadow-xs overflow-hidden">
-            <textarea
-                {...props}
-                ref={props.ref}
-                onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = '0px';
-                    target.style.height = target.scrollHeight + 'px';
-                }}
-                data-slot="textarea"
-                className={'outline-none text-sm min-w-16 w-full resize-y'}
-                placeholder="Write a comment..."
-            />
-            <div className="flex justify-end pb-0 p-1.5 bg-transparent">
-                <div className="flex items-center gap-1.5">
-                    {typeof onCancel !== 'undefined' ? (
-                        <Button
-                            size={'sm'}
-                            variant={'ghost'}
-                            onClick={onCancel}
-                        >
-                            Cancel
-                        </Button>
-                    ) : null}
-                    <Button size={'sm'} variant={'secondary'} onClick={onSend}>
-                        Send
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-};
+import { LoginRequiredAlertDialog } from './login-required-alert-dialog';
 
 export const CommentSection = ({
     celebrityId,
@@ -69,6 +29,8 @@ export const CommentSection = ({
     const { data: celebProfile } =
         queryHooks.suspense.useCelebrity(celebrityId);
     const { data: session } = queryHooks.suspense.useAuthSession(userId);
+
+    const [open, setOpen] = useState(false);
 
     const queryClient = useQueryClient();
     const { data: liked } = queryHooks.suspense.useLiked({
@@ -84,9 +46,12 @@ export const CommentSection = ({
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
 
     const onReplyHandler = async () => {
+        if (!session) {
+            setOpen(true);
+            return;
+        }
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        if (!session) return;
         await replyServerAction({
             author: session.user.name || 'Anonymous',
             parentId: replyCommentId as string,
@@ -110,7 +75,10 @@ export const CommentSection = ({
     };
 
     const onLikeHandler = async () => {
-        if (!session) return;
+        if (!session) {
+            setOpen(true);
+            return;
+        }
         const userLikedKey = queryKeys
             .celebrity(celebProfile.id)
             .users(session.user.id)
@@ -147,9 +115,12 @@ export const CommentSection = ({
     };
 
     const onCommentHandler = async () => {
+        if (!session) {
+            setOpen(true);
+            return;
+        }
         const value = textarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        if (!session) return;
         await commentServerAction({
             author: session.user.name || 'Anonymous',
             authorId: session.user.id,
@@ -172,12 +143,7 @@ export const CommentSection = ({
     return (
         <>
             <div className="flex items-center gap-1.5">
-                <Button
-                    onClick={async () => {
-                        onLikeHandler();
-                    }}
-                    variant={'secondary'}
-                >
+                <Button onClick={onLikeHandler} variant={'secondary'}>
                     <Heart
                         className={cn({
                             'fill-red-600 stroke-red-600': liked.liked,
@@ -188,7 +154,8 @@ export const CommentSection = ({
                 </Button>
                 <Button
                     onClick={() => {
-                        textarea.current?.focus();
+                        if (!session) setOpen(true);
+                        else textarea.current?.focus();
                     }}
                     variant={'secondary'}
                     className="rounded-full"
@@ -215,11 +182,7 @@ export const CommentSection = ({
                     if (e.key === 'Enter' && e.altKey) onCommentHandler();
                 }}
                 onSend={onCommentHandler}
-                onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = '0px';
-                    target.style.height = target.scrollHeight + 'px';
-                }}
+                placeholder="Write a comment..."
             />
 
             <div className="">
@@ -317,6 +280,7 @@ export const CommentSection = ({
                                                 onSend={() => {
                                                     onReplyHandler();
                                                 }}
+                                                placeholder="Write a comment..."
                                             />
                                         </div>
                                     ) : null}
@@ -328,6 +292,11 @@ export const CommentSection = ({
                     <EmptyComments />
                 )}
             </div>
+            <LoginRequiredAlertDialog
+                open={open}
+                onOpenChange={setOpen}
+                celebrityId={celebrityId}
+            />
         </>
     );
 };
