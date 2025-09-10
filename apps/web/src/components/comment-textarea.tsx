@@ -21,6 +21,11 @@ export const CommentTextarea = ({
     const textareaEl = (
         <textarea
             {...props}
+            onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = '0px';
+                target.style.height = target.scrollHeight + 'px';
+            }}
             data-slot="textarea"
             className={'outline-none text-sm min-w-16 w-full resize-y'}
         />

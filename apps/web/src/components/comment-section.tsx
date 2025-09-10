@@ -182,11 +182,6 @@ export const CommentSection = ({
                     if (e.key === 'Enter' && e.altKey) onCommentHandler();
                 }}
                 onSend={onCommentHandler}
-                onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = '0px';
-                    target.style.height = target.scrollHeight + 'px';
-                }}
                 placeholder="Write a comment..."
             />
 
