@@ -55,17 +55,26 @@ export const ClientContent = () => {
     const params = useSearchParams();
     const router = useRouter();
     const [loginType, setLoginType] = useState<'sign-up' | 'login'>('login');
+
+    const isRedirectVulnerable = (redirect: string) =>
+        ['http://', 'https://']
+            .map((prefix) => redirect.startsWith(prefix))
+            .some(Boolean);
     const { mutate: signInWithGoogle, isPending: isGooglePending } =
         useMutation({
             mutationFn: () => {
+                const redirect = params.get('redirect');
+                const isVulnerableRedirect = redirect
+                    ? isRedirectVulnerable(redirect)
+                    : false;
                 return authClient.signIn.social({
                     provider: 'google',
+                    callbackURL: redirect
+                        ? isVulnerableRedirect
+                            ? '/'
+                            : redirect
+                        : '/',
                 });
-            },
-            onSuccess: () => {
-                const redirect = params.get('redirect');
-                if (redirect) router.push(redirect);
-                else router.push('/');
             },
             onError: () => {
                 toast('Failed to sign in with Google');
@@ -98,7 +107,8 @@ export const ClientContent = () => {
         onSuccess: () => {
             const redirect = params.get('redirect');
             if (redirect) {
-                router.push(redirect);
+                if (isRedirectVulnerable(redirect)) router.push('/');
+                else router.push(redirect);
             } else {
                 router.push('/');
             }
