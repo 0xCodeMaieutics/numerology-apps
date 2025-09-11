@@ -63,7 +63,9 @@ export const ClientContent = () => {
                 });
             },
             onSuccess: () => {
-                router.push('/');
+                const redirect = params.get('redirect');
+                if (redirect) router.push(redirect);
+                else router.push('/');
             },
             onError: () => {
                 toast('Failed to sign in with Google');
