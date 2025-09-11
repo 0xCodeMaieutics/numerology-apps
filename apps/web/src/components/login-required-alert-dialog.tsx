@@ -37,7 +37,9 @@ export const LoginRequiredAlertDialog = ({
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction asChild>
                         <Link
-                            href={navigation.login.redirect(celebrityId)}
+                            href={navigation.login.redirect(
+                                navigation.celebrity.detail(celebrityId),
+                            )}
                             className="flex items-center"
                         >
                             <span>Login</span>
