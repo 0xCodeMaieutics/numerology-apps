@@ -3,9 +3,13 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
   "exports": {
     "./sql": "./src/sql.ts",
-    "./nosql": "./src/nosql.ts"
+    "./nosql": "./src/nosql.ts",
+    "./redis": "./src/redis/index.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^15.4.5",
@@ -24,7 +28,8 @@
     "globals": "^15.15.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.39.0"
+    "typescript-eslint": "^8.39.0",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "dotenv": "^17.2.2",
@@ -33,6 +38,8 @@
   },
   "dependencies": {
     "@faker-js/faker": "^10.0.0",
+    "@upstash/redis": "^1.35.3",
+    "mongodb": "^6.19.0",
     "mongoose": "^8.18.0"
   }
 }

@@ -1,3 +1,5 @@
+'use client';
+
 import { queryHooks } from '@/hooks/queries';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -5,18 +7,21 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@workspace/ui/components/tooltip';
+import { cn } from '@workspace/ui/lib/utils';
 import { Mail } from 'lucide-react';
 import { ComponentPropsWithRef } from 'react';
 
 export const CommentTextarea = ({
     onCancel,
     onSend,
+    replyName,
     ...props
 }: ComponentPropsWithRef<'textarea'> & {
     onCancel?: () => void;
     onSend?: () => void;
+    replyName?: string;
 }) => {
-    const { data: session } = queryHooks.suspense.useAuthSession();
+    const session = queryHooks.suspense.useAuthSession();
 
     const textareaEl = (
         <textarea
@@ -31,8 +36,21 @@ export const CommentTextarea = ({
         />
     );
     return (
-        <div className="relative flex flex-col gap-1.5 border-input dark:bg-input/30 w-full rounded-md border bg-transparent px-3 py-4 text-base shadow-xs overflow-hidden">
-            {session ? (
+        <div
+            className={cn(
+                'relative flex flex-col gap-1.5 border-input dark:bg-input/30 w-full rounded-md border bg-transparent px-3 py-4 text-base shadow-xs overflow-hidden',
+                {
+                    'pt-7': typeof replyName !== 'undefined',
+                },
+            )}
+        >
+            {replyName ? (
+                <span className="absolute top-1.5 text-xs text-muted-foreground">
+                    Reply to: <span className="font-medium">{replyName}</span>
+                </span>
+            ) : null}
+
+            {session.data ? (
                 textareaEl
             ) : (
                 <Tooltip>

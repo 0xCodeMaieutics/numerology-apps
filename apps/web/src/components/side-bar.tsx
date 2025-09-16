@@ -48,7 +48,7 @@ const SideLink = ({
     );
 };
 
-export const SideBar = () => {
+const SideBar = () => {
     const pathname = usePathname();
     const session = authClient.useSession();
     return (
@@ -73,6 +73,7 @@ export const SideBar = () => {
             <SideLink Icon={CalculatorIcon}>Calculator</SideLink>
 
             <SideLink Icon={UsersRound}>App</SideLink>
+
             <Link
                 href={
                     session.data
@@ -112,3 +113,5 @@ export const SideBar = () => {
         </aside>
     );
 };
+
+export default SideBar;
