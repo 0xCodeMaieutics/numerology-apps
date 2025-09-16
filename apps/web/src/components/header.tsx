@@ -14,7 +14,7 @@ const ButtonSkeleton = () => (
     <Skeleton className="h-12 w-[100px] bg-foreground/10 rounded-full" />
 );
 
-export const Header = () => (
+const Header = () => (
     <header className="fixed bg-background border-b z-50 top-0 left-0 right-0 p-4">
         <div className="w-full max-w-6xl flex gap-5 md:gap-0 items-center justify-between mx-auto">
             <Link href="/">
@@ -44,3 +44,5 @@ export const Header = () => (
         </div>
     </header>
 );
+
+export default Header;
