@@ -152,7 +152,6 @@ export const CommentSection = ({
         }
     };
 
-    console.log(commentsCount);
     const onCommentHandler = async () => {
         if (!session) {
             setLoginAlertDialogOpen(true);
@@ -237,7 +236,6 @@ export const CommentSection = ({
     const onReplyClickHandler = async (
         comment: ICelebrityCommentBaseWithoutObjectId,
     ) => {
-        console.log(comment);
         if (!session) return setLoginAlertDialogOpen(true);
         const replyEl = replyTextarea.current;
         setReplyCommentId(comment._id);

@@ -49,7 +49,7 @@ export const nosqlDB = {
         const session = await mongoose.startSession();
 
         await session.withTransaction(async () => {
-          const existingLike = await nosqlDB.CommentLike.findOne({
+          const existingLike = await CommentLike.findOne({
             userId,
             commentId: new mongoose.Types.ObjectId(commentId),
           }).session(session);
@@ -57,12 +57,13 @@ export const nosqlDB = {
           if (!existingLike)
             throw new Error("Comment not liked by user, cannot unlike");
 
-          await nosqlDB.models.CelebrityComment.decrementLikes({
-            commentId: commentId,
-            session: session,
-          });
+          await CelebrityComment.findByIdAndUpdate(
+            commentId,
+            { $inc: { likes: -1 } },
+            { session: session }
+          );
 
-          await nosqlDB.CommentLike.deleteOne(
+          await CommentLike.deleteOne(
             {
               userId,
               commentId: commentId,
@@ -82,19 +83,20 @@ export const nosqlDB = {
         const session = await mongoose.startSession();
 
         await session.withTransaction(async () => {
-          const existingLike = await nosqlDB.CommentLike.findOne({
+          const existingLike = await CommentLike.findOne({
             userId,
             commentId: new mongoose.Types.ObjectId(commentId),
           }).session(session);
 
           if (existingLike) throw new Error("Comment already liked by user");
 
-          await nosqlDB.models.CelebrityComment.incrementLikes({
-            commentId: commentId,
-            session: session,
-          });
+          await CelebrityComment.findByIdAndUpdate(
+            commentId,
+            { $inc: { likes: 1 } },
+            { session: session }
+          );
 
-          await nosqlDB.CommentLike.insertOne(
+          await CommentLike.insertOne(
             {
               userId,
               commentId: commentId,
