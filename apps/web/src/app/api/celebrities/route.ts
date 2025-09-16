@@ -1,6 +1,6 @@
-import { API_RESPONSE } from '@/utils/api-responses';
+import { redis } from '@workspace/db/redis';
 
-import { redis } from '@/lib/redis-client';
+import { API_RESPONSE } from '@/utils/api-responses';
 
 export const GET = async (request: Request) => {
     try {

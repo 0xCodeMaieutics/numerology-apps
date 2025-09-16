@@ -2,12 +2,14 @@ import { isDevelopment } from '@/constants';
 import { queryKeys } from '@/hooks/queries';
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { nosqlDB } from '@workspace/db/nosql';
+import { redis } from '@workspace/db/redis';
 import { sqlDB } from '@workspace/db/sql';
 import { Badge } from '@workspace/ui/components/badge';
 import { ChevronLeft } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 import { CelebrityImage } from '@/components/celebrity-image';
 import { CommentSection } from '@/components/comment-section';
@@ -15,29 +17,59 @@ import { Infos } from '@/components/infos';
 
 import { auth } from '@/lib/auth';
 import { getQueryClient } from '@/lib/react-query';
-import { redis } from '@/lib/redis-client';
 
-const REVALIDATE = isDevelopment ? 60 * 10 : 60 * 10; // 10 minutes
+const REVALIDATE = isDevelopment ? 1 : 60 * 10;
 
-const getComments = (celebrityId: string) =>
+const getComments = ({
+    celebrityId,
+    userId,
+}: {
+    celebrityId: string;
+    userId?: string;
+}) =>
     unstable_cache(
-        async (celebrityId: string) =>
+        async ({
+            celebrityId,
+            userId,
+        }: {
+            celebrityId: string;
+            userId?: string;
+        }) =>
             nosqlDB.models.CelebrityComment.findCommentsWithReplies(
-                celebrityId,
+                {
+                    userId,
+                    celebrityId,
+                },
                 {
                     sortBy: {
                         replyCreatedAt: 'asc',
                     },
                 },
             ),
-        queryKeys.comments(celebrityId),
+        queryKeys.comments({
+            celebrityId,
+            userId: userId ?? 'user-not-logged-in',
+        }),
         {
             revalidate: REVALIDATE,
-            tags: [queryKeys.comments(celebrityId).join('/')],
+            tags: [
+                queryKeys
+                    .comments({
+                        celebrityId,
+                        userId: userId ?? 'user-not-logged-in',
+                    })
+                    .join('/'),
+            ],
         },
     );
 
-const getCommentsCount = (celebrityId: string) =>
+const getCommentsCount = ({
+    celebrityId,
+    userId,
+}: {
+    celebrityId: string;
+    userId?: string;
+}) =>
     unstable_cache(
         (celebrityId: string) =>
             nosqlDB.models.CelebrityComment.getCommentAndRepliesCount(
@@ -46,7 +78,14 @@ const getCommentsCount = (celebrityId: string) =>
         queryKeys.celebrity(celebrityId).commentsCount,
         {
             revalidate: REVALIDATE,
-            tags: [queryKeys.comments(celebrityId).join('/')],
+            tags: [
+                queryKeys
+                    .comments({
+                        celebrityId,
+                        userId,
+                    })
+                    .join('/'),
+            ],
         },
     );
 
@@ -96,8 +135,18 @@ export default async function CelebrityPage({
             queryFn: () => session,
         }),
         queryClient.prefetchQuery({
-            queryKey: queryKeys.comments(celebrityId),
-            queryFn: () => getComments(celebrityId)(celebrityId),
+            queryKey: queryKeys.comments({
+                celebrityId,
+                userId: session?.user?.id,
+            }),
+            queryFn: () =>
+                getComments({
+                    celebrityId,
+                    userId: session?.user?.id,
+                })({
+                    celebrityId,
+                    userId: session?.user?.id,
+                }),
         }),
         queryClient.prefetchQuery({
             queryKey: queryKeys
@@ -120,7 +169,11 @@ export default async function CelebrityPage({
         }),
         queryClient.prefetchQuery({
             queryKey: queryKeys.celebrity(celebrityId).commentsCount,
-            queryFn: () => getCommentsCount(celebrityId)(celebrityId),
+            queryFn: () =>
+                getCommentsCount({
+                    celebrityId,
+                    userId: session?.user?.id,
+                })(celebrityId),
         }),
     ]);
 
@@ -149,10 +202,12 @@ export default async function CelebrityPage({
                 </div>
                 <Bio bio={celebProfile?.bio} />
                 <HydrationBoundary state={dehydrate(queryClient)}>
-                    <CommentSection
-                        celebrityId={celebrityId}
-                        userId={session?.user.id}
-                    />
+                    <Suspense>
+                        <CommentSection
+                            celebrityId={celebrityId}
+                            userId={session?.user.id}
+                        />
+                    </Suspense>
                 </HydrationBoundary>
             </div>
         </div>

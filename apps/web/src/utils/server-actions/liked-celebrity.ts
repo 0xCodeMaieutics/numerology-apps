@@ -1,8 +1,7 @@
 'use server';
 
+import { redis } from '@workspace/db/redis';
 import { sqlDB } from '@workspace/db/sql';
-
-import { redis } from '@/lib/redis-client';
 
 export const likeCelebrity = async ({
     celebrityId,

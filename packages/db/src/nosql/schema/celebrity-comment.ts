@@ -9,9 +9,27 @@ export interface ICelebrityCommentBase {
   comment: string;
   likes: number;
   level: number; // 0 for top-level, 1 for first reply, 2 for nested reply, etc.
+  isLikedByUser?: boolean;
+  likesCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
   __v?: number;
+}
+
+export type ICelebrityCommentBaseWithoutObjectId = Omit<
+  ICelebrityCommentBase,
+  "_id" | "celebrityId" | "parentId"
+> & {
+  _id: string;
+  celebrityId: string;
+  parentId?: string;
+};
+
+export interface ICelebrityCommentWithoutObjectId
+  extends ICelebrityCommentBaseWithoutObjectId {
+  replies: ICelebrityCommentBaseWithoutObjectId[];
+  replyCount?: number;
+  hasMoreReplies?: boolean;
 }
 
 export interface ICelebrityComment extends ICelebrityCommentBase {

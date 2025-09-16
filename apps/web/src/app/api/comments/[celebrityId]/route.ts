@@ -7,13 +7,24 @@ export const GET = async (
     _req: NextRequest,
     ctx: RouteContext<'/api/comments/[celebrityId]'>,
 ) => {
+    const url = new URL(_req.url);
+    const searchParams = url.searchParams;
+    const userId = searchParams.get('userId');
     const { celebrityId } = await ctx.params;
     try {
         if (!celebrityId) return API_RESPONSE[400]();
 
         const comments =
             await nosqlDB.models.CelebrityComment.findCommentsWithReplies(
-                celebrityId,
+                {
+                    userId: userId ?? undefined,
+                    celebrityId,
+                },
+                {
+                    sortBy: {
+                        replyCreatedAt: 'asc',
+                    },
+                },
             );
 
         return new Response(JSON.stringify(comments), {

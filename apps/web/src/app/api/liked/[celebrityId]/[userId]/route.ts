@@ -1,8 +1,7 @@
+import { redis } from '@workspace/db/redis';
 import { NextRequest } from 'next/server';
 
 import { API_RESPONSE } from '@/utils/api-responses';
-
-import { redis } from '@/lib/redis-client';
 
 export const GET = async (
     _req: NextRequest,

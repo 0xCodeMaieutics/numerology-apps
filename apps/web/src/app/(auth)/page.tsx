@@ -1,3 +1,4 @@
+import { isDevelopment } from '@/constants';
 import { sqlDB } from '@workspace/db/sql';
 import {
     Card,
@@ -9,8 +10,7 @@ import Image from 'next/image';
 
 import { Categories } from '@/components/categories';
 import { Stories } from '@/components/stories';
-
-import { redis } from '@/lib/redis-client';
+import { redis } from '@workspace/db/redis';
 
 const WelcomeCard = ({
     celebrityCount,
@@ -55,7 +55,7 @@ const WelcomeCard = ({
     </Card>
 );
 
-const REVALIDATE = 60 * 60; // 60 minutes
+const REVALIDATE = isDevelopment ? 1 : 60 * 60; // 60 minutes
 
 const getUserCount = unstable_cache(
     async () => sqlDB.user.select.count(),
