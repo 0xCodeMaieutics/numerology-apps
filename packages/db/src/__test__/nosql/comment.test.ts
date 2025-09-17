@@ -33,7 +33,7 @@ describe("CelebrityComment", async () => {
     likes: 0,
   };
 
-  const dummaryReplyData = {
+  const dummyReplyData = {
     author: "Test Author",
     comment: "This is a test reply",
     repliedAuthor: "Test Author",
@@ -57,7 +57,7 @@ describe("CelebrityComment", async () => {
         .map((id, i) =>
           Array.from({ length: TOTAL_REPLIES }).map(() =>
             nosqlDB.models.CelebrityComment.createReply({
-              ...dummaryReplyData,
+              ...dummyReplyData,
               celebrityId,
               parentId: id,
               authorId: i % 2 === 0 ? userId1! : userId2!,
@@ -188,7 +188,7 @@ describe("CelebrityComment", async () => {
     expect(comment.likes).toBe(0);
     expect(comment.celebrityId.toString()).toBe(celebrityId);
     const reply = await nosqlDB.models.CelebrityComment.createReply({
-      ...dummaryReplyData,
+      ...dummyReplyData,
       celebrityId,
       parentId: comment._id.toString(),
       author: AUTHOR2,
