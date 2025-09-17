@@ -79,7 +79,7 @@ Error: "BadValue: security.keyFile is required when authorization is enabled wit
 ### File stuff
 
 chmod = change mode
-chown = change owner (c©hown 999:999)
+chown = change owner (chown 999:999)
 
 docker-entrypoint-initdb.d directory in docker that executes its scripts during docker container's startup
 
@@ -92,5 +92,5 @@ openssl rand -base64 756 > path/to/replica.key
 Change file mode
 
 ```sh
-chmod chmod 400 path/to/replica.key
+chmod 400 path/to/replica.key
 ```
