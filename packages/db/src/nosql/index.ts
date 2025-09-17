@@ -1,14 +1,15 @@
-import connect from "./nosql/connect";
-import mongoose, { Types } from "mongoose";
-import CelebrityComment, {
+import mongoose, { PipelineStage, Types } from "mongoose";
+import {
+  CELEBRITY_COMMENTS_COLLECTION,
   ICelebrityComment,
   ICelebrityCommentWithoutObjectId,
   ICelebrityCommentWrite,
   ICelebrityReplyWrite,
-} from "./nosql/schema/celebrity-comment";
-import CommentLike from "./nosql/schema/comment-like";
+} from "./schema/celebrity-comment";
+import CelebrityComment from "./schema/celebrity-comment";
+import CommentLike, { COMMENT_LIKES_COLLECTION } from "./schema/comment-like";
+import connect from "./connect";
 
-import User from "./nosql/schema/user";
 export type NoSQLQueries = {
   CelebrityComment: {
     create: mongoose.Document<unknown, {}, ICelebrityComment, {}, {}> &
@@ -29,7 +30,6 @@ export type NoSQLQueries = {
 export const nosqlDB = {
   connect,
   CelebrityComment,
-  User,
   CommentLike,
   models: {
     CelebrityComment: {
@@ -159,195 +159,190 @@ export const nosqlDB = {
           sortBy = { createdAt: "desc", replyCreatedAt: "desc" },
         } = options;
 
-        return (
-          await CelebrityComment.aggregate([
-            {
-              $match: {
-                celebrityId: new Types.ObjectId(celebrityId),
-                parentId: null,
-              },
+        const replyPipeline: any[] = [
+          {
+            $match: {
+              $expr: { $eq: ["$parentId", "$$commentId"] },
             },
-            { $sort: { createdAt: sortBy.createdAt === "asc" ? 1 : -1 } },
-            { $skip: skip },
-            { $limit: limit },
-
-            // Check if current user liked this comment
-            {
-              $lookup: {
-                from: "comment_likes",
-                let: { commentId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$commentId", "$$commentId"] },
-                          { $eq: ["$userId", userId] },
-                        ],
-                      },
-                    },
-                  },
-                ],
-                as: "userLike",
-              },
+          },
+          {
+            $sort: {
+              createdAt: sortBy.replyCreatedAt === "asc" ? 1 : -1,
             },
+          },
+          { $skip: replySkip },
+          { $limit: replyLimit },
 
-            // Get total likes count for this comment
-            {
-              $lookup: {
-                from: "comment_likes",
-                let: { commentId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: { $eq: ["$commentId", "$$commentId"] },
-                    },
+          {
+            $lookup: {
+              from: COMMENT_LIKES_COLLECTION,
+              let: { replyId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$commentId", "$$replyId"] },
                   },
-                  { $count: "total" },
-                ],
-                as: "likesCountResult",
-              },
-            },
-
-            // Get replies with their like information
-            {
-              $lookup: {
-                from: "celebrity_comments",
-                let: { commentId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: { $eq: ["$parentId", "$$commentId"] },
-                    },
-                  },
-                  {
-                    $sort: {
-                      createdAt: sortBy.replyCreatedAt === "asc" ? 1 : -1,
-                    },
-                  },
-                  { $skip: replySkip },
-                  { $limit: replyLimit },
-
-                  // Check if current user liked each reply
-                  {
-                    $lookup: {
-                      from: "comment_likes",
-                      let: { replyId: "$_id" },
-                      pipeline: [
-                        {
-                          $match: {
-                            $expr: {
-                              $and: [
-                                { $eq: ["$commentId", "$$replyId"] },
-                                { $eq: ["$userId", userId] },
-                              ],
-                            },
-                          },
-                        },
-                      ],
-                      as: "userLike",
-                    },
-                  },
-
-                  // Get total likes count for each reply
-                  {
-                    $lookup: {
-                      from: "comment_likes",
-                      let: { replyId: "$_id" },
-                      pipeline: [
-                        {
-                          $match: {
-                            $expr: { $eq: ["$commentId", "$$replyId"] },
-                          },
-                        },
-                        { $count: "total" },
-                      ],
-                      as: "likesCountResult",
-                    },
-                  },
-
-                  // Add like fields to replies
-                  {
-                    $addFields: {
-                      isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] },
-                      likesCount: {
-                        $ifNull: [
-                          { $arrayElemAt: ["$likesCountResult.total", 0] },
-                          0,
-                        ],
-                      },
-                    },
-                  },
-
-                  // Clean up temporary fields
-                  {
-                    $project: {
-                      userLike: 0,
-                      likesCountResult: 0,
-                    },
-                  },
-                ],
-                as: "replies",
-              },
-            },
-
-            // Get total reply count
-            {
-              $lookup: {
-                from: "celebrity_comments",
-                let: { commentId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: { $eq: ["$parentId", "$$commentId"] },
-                    },
-                  },
-                  { $count: "total" },
-                ],
-                as: "replyCountResult",
-              },
-            },
-
-            // Add all computed fields
-            {
-              $addFields: {
-                isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] },
-                likesCount: {
-                  $ifNull: [
-                    { $arrayElemAt: ["$likesCountResult.total", 0] },
-                    0,
-                  ],
                 },
-                replyCount: {
-                  $ifNull: [
-                    { $arrayElemAt: ["$replyCountResult.total", 0] },
-                    0,
-                  ],
-                },
-                hasMoreReplies: {
-                  $gt: [
-                    {
-                      $ifNull: [
-                        { $arrayElemAt: ["$replyCountResult.total", 0] },
-                        0,
+                { $count: "total" },
+              ],
+              as: "likesCountResult",
+            },
+          },
+        ];
+
+        if (userId)
+          replyPipeline.push({
+            $lookup: {
+              from: COMMENT_LIKES_COLLECTION,
+              let: { replyId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$commentId", "$$replyId"] },
+                        { $eq: ["$userId", userId] },
                       ],
                     },
-                    { $add: [replySkip, replyLimit] },
-                  ],
+                  },
                 },
-              },
+              ],
+              as: "userLike",
             },
+          });
 
-            // Clean up temporary fields
-            {
-              $project: {
-                userLike: 0,
-                likesCountResult: 0,
-                replyCountResult: 0,
+        replyPipeline.push(
+          {
+            $addFields: {
+              ...(userId
+                ? { isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] } }
+                : {}),
+              likesCount: {
+                $ifNull: [{ $arrayElemAt: ["$likesCountResult.total", 0] }, 0],
               },
             },
-          ])
-        ).map((doc) => ({
+          },
+          {
+            $project: {
+              ...(userId ? { userLike: 0 } : {}),
+              likesCountResult: 0,
+              repliedToUserInfo: 0,
+            },
+          }
+        );
+
+        const pipeline: PipelineStage[] = [
+          {
+            $match: {
+              celebrityId: new Types.ObjectId(celebrityId),
+              parentId: null,
+            },
+          },
+          { $sort: { createdAt: sortBy.createdAt === "asc" ? 1 : -1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ];
+
+        if (userId)
+          pipeline.push({
+            $lookup: {
+              from: COMMENT_LIKES_COLLECTION,
+              let: { commentId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$commentId", "$$commentId"] },
+                        { $eq: ["$userId", userId] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "userLike",
+            },
+          });
+
+        pipeline.push(
+          {
+            $lookup: {
+              from: COMMENT_LIKES_COLLECTION,
+              let: { commentId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$commentId", "$$commentId"] },
+                  },
+                },
+                { $count: "total" },
+              ],
+              as: "likesCountResult",
+            },
+          },
+          {
+            $lookup: {
+              from: CELEBRITY_COMMENTS_COLLECTION,
+              let: { commentId: "$_id" },
+              pipeline: replyPipeline,
+              as: "replies",
+            },
+          },
+          {
+            $lookup: {
+              from: CELEBRITY_COMMENTS_COLLECTION,
+              let: { commentId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$parentId", "$$commentId"] },
+                  },
+                },
+                { $count: "total" },
+              ],
+              as: "replyCountResult",
+            },
+          },
+          {
+            $addFields: {
+              ...(userId
+                ? { isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] } }
+                : {}),
+              likesCount: {
+                $ifNull: [
+                  { $arrayElemAt: ["$likesCountResult.total", 0] }, // likesCountResult => [{ total: number }]
+                  0,
+                ],
+              },
+              replyCount: {
+                $ifNull: [
+                  { $arrayElemAt: ["$replyCountResult.total", 0] }, // replyCountResult => [{ total: number }]
+                  0,
+                ],
+              },
+              hasMoreReplies: {
+                $gt: [
+                  {
+                    $ifNull: [
+                      { $arrayElemAt: ["$replyCountResult.total", 0] }, // replyCountResult => [{ total: number }]
+                      0,
+                    ],
+                  },
+                  { $add: [replySkip, replyLimit] },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              userLike: 0,
+              likesCountResult: 0,
+              replyCountResult: 0,
+            },
+          }
+        );
+
+        return (await CelebrityComment.aggregate(pipeline)).map((doc) => ({
           ...doc,
           _id: doc._id.toString(),
           celebrityId: doc.celebrityId.toString(),
@@ -383,14 +378,6 @@ export const nosqlDB = {
         );
       },
     },
-    User: {
-      create: async ({ _id }: { _id: string }) => {
-        await connect();
-        return User.create({
-          _id: new mongoose.Types.ObjectId(_id),
-        });
-      },
-    },
     CommentLike: {
       findOne: async ({
         commentId,
@@ -415,4 +402,4 @@ export type {
   ICelebrityReplyWrite,
   ICelebrityCommentWithoutObjectId,
   ICelebrityCommentBaseWithoutObjectId,
-} from "./nosql/schema/celebrity-comment";
+} from "./schema/celebrity-comment";

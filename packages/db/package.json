@@ -7,8 +7,8 @@
     "test": "vitest run"
   },
   "exports": {
-    "./sql": "./src/sql.ts",
-    "./nosql": "./src/nosql.ts",
+    "./sql": "./src/sql/index.ts",
+    "./nosql": "./src/nosql/index.ts",
     "./redis": "./src/redis/index.ts"
   },
   "devDependencies": {

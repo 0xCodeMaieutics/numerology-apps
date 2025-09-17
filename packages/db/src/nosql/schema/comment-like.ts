@@ -8,7 +8,7 @@ export interface ICommentLike {
   updatedAt?: Date;
 }
 
-const COLLECTION_NAME = "comment_likes";
+export const COMMENT_LIKES_COLLECTION = "comment_likes";
 
 const CommentLikeSchema = new mongoose.Schema<ICommentLike>(
   {
@@ -25,7 +25,7 @@ const CommentLikeSchema = new mongoose.Schema<ICommentLike>(
     },
   },
   {
-    collection: COLLECTION_NAME,
+    collection: COMMENT_LIKES_COLLECTION,
     timestamps: true,
   }
 );

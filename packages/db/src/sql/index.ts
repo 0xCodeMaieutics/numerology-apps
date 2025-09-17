@@ -1,9 +1,9 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { celebritiesTable } from "./sql/schema/celebrities";
-import { userTable } from "./sql/schema/user";
-import { accountTable } from "./sql/schema/account";
-import { sessionTable } from "./sql/schema/session";
-import { verificationTable } from "./sql/schema/verification";
+import { celebritiesTable } from "./schema/celebrities";
+import { userTable } from "./schema/user";
+import { accountTable } from "./schema/account";
+import { sessionTable } from "./schema/session";
+import { verificationTable } from "./schema/verification";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 import { count, sql } from "drizzle-orm";
 
