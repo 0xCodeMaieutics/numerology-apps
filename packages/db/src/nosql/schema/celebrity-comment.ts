@@ -13,6 +13,8 @@ export interface ICelebrityCommentBase {
   likesCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
+  repliedAuthor?: string;
+  repliedAuthorId?: string; // user id stored in sql user table
   __v?: number;
 }
 
@@ -52,10 +54,12 @@ export interface ICelebrityReplyWrite {
   author: string;
   authorId: string;
   comment: string;
+  repliedAuthor: string;
+  repliedAuthorId: string;
   likes?: number;
 }
 
-const COLLECTION_NAME = "celebrity_comments";
+export const CELEBRITY_COMMENTS_COLLECTION = "celebrity_comments";
 
 const CelebrityCommentSchema = new mongoose.Schema<ICelebrityComment>(
   {
@@ -71,13 +75,21 @@ const CelebrityCommentSchema = new mongoose.Schema<ICelebrityComment>(
       index: true,
     },
     author: { type: String, required: true },
-    authorId: { type: String, required: true },
+    authorId: { type: String, required: true }, // user id that's stored in sql user table
     comment: { type: String, required: true },
     likes: { type: Number, required: true, default: 0 },
     level: { type: Number, required: true, default: 0 },
+    repliedAuthor: {
+      type: String,
+      required: false,
+    },
+    repliedAuthorId: {
+      type: String,
+      required: false,
+    },
   },
   {
-    collection: COLLECTION_NAME,
+    collection: CELEBRITY_COMMENTS_COLLECTION,
     timestamps: true,
   }
 );

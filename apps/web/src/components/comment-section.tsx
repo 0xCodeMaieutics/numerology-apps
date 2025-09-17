@@ -2,7 +2,10 @@
 
 import { queryHooks, queryKeys } from '@/hooks/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { ICelebrityCommentBaseWithoutObjectId } from '@workspace/db/nosql';
+import {
+    ICelebrityCommentBaseWithoutObjectId,
+    ICelebrityCommentWithoutObjectId,
+} from '@workspace/db/nosql';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
@@ -81,18 +84,23 @@ export const CommentSection = ({
     const textarea = useRef<HTMLTextAreaElement>(null);
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
 
-    const onReplySendHandler = async (parentId: string) => {
+    const onReplySendHandler = async (
+        comment: ICelebrityCommentWithoutObjectId,
+    ) => {
         if (!session) return;
+        if (!comment.parentId) return;
 
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
         await replyServerAction({
             author: session.user.name || 'Anonymous',
-            parentId,
+            parentId: comment.parentId,
             authorId: session?.user.id,
             celebrityId: celebProfile.id,
             comment: value,
             likes: 0,
+            repliedAuthor: session.user.name || 'Anonymous',
+            repliedAuthorId: comment.authorId,
         });
         replyTextarea.current!.value = '';
 
@@ -359,7 +367,7 @@ export const CommentSection = ({
                                                                         e.altKey
                                                                     )
                                                                         onReplySendHandler(
-                                                                            comment._id,
+                                                                            comment,
                                                                         );
                                                                 }}
                                                                 onCancel={() =>
@@ -369,7 +377,7 @@ export const CommentSection = ({
                                                                 }
                                                                 onSend={() =>
                                                                     onReplySendHandler(
-                                                                        comment._id,
+                                                                        comment,
                                                                     )
                                                                 }
                                                                 placeholder="Write a comment..."
@@ -393,16 +401,14 @@ export const CommentSection = ({
                                                         e.altKey
                                                     )
                                                         onReplySendHandler(
-                                                            comment._id,
+                                                            comment,
                                                         );
                                                 }}
                                                 onCancel={() =>
                                                     setReplyCommentId(null)
                                                 }
                                                 onSend={() =>
-                                                    onReplySendHandler(
-                                                        comment._id,
-                                                    )
+                                                    onReplySendHandler(comment)
                                                 }
                                                 placeholder="Write a comment..."
                                             />
