@@ -66,7 +66,6 @@ export const CompleteProfileForm = () => {
         });
 
     const onSubmit = (values: FormSchema) => {
-        console.log(values.dob.toLocaleDateString());
         updateUserProfileMutate({
             birthDate: values.dob,
             ...(values.nickname?.trim()
