@@ -2,10 +2,7 @@
 
 import { queryHooks, queryKeys } from '@/hooks/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-    ICelebrityCommentBaseWithoutObjectId,
-    ICelebrityCommentWithoutObjectId,
-} from '@workspace/db/nosql';
+import { ICelebrityCommentBaseWithoutObjectId } from '@workspace/db/nosql';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
@@ -66,7 +63,6 @@ export const CommentSection = ({
 
     const [isLoginRequiredAlertDialogOpen, setLoginAlertDialogOpen] =
         useState(false);
-
     const queryClient = useQueryClient();
     const { data: liked } = queryHooks.suspense.useLiked({
         celebrityId: celebProfile.id,
@@ -84,23 +80,27 @@ export const CommentSection = ({
     const textarea = useRef<HTMLTextAreaElement>(null);
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
 
-    const onReplySendHandler = async (
-        comment: ICelebrityCommentWithoutObjectId,
-    ) => {
+    const onReplySendHandler = async ({
+        parentId,
+        repliedComment,
+    }: {
+        parentId: string;
+        repliedComment: ICelebrityCommentBaseWithoutObjectId;
+    }) => {
         if (!session) return;
-        if (!comment.parentId) return;
+
+        if (!replyCommentId) return;
 
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
         await replyServerAction({
             author: session.user.name || 'Anonymous',
-            parentId: comment.parentId,
+            parentId,
             authorId: session?.user.id,
             celebrityId: celebProfile.id,
             comment: value,
-            likes: 0,
-            repliedAuthor: session.user.name || 'Anonymous',
-            repliedAuthorId: comment.authorId,
+            repliedAuthor: repliedComment.author,
+            repliedAuthorId: repliedComment.authorId,
         });
         replyTextarea.current!.value = '';
 
@@ -129,7 +129,9 @@ export const CommentSection = ({
             .users(session.user.id)
             .liked();
         const celebKey = queryKeys.celebrity(celebProfile.id).default;
-        queryClient.setQueryData<{ liked: boolean }>(userLikedKey, (liked) => ({
+        queryClient.setQueryData<{
+            liked: boolean;
+        }>(userLikedKey, (liked) => ({
             liked: liked ? !liked.liked : false,
         }));
 
@@ -148,10 +150,11 @@ export const CommentSection = ({
             });
         } catch (err) {
             toast.error('Something went wrong');
-            queryClient.setQueryData<{ liked: boolean }>(
-                userLikedKey,
-                (liked) => ({ liked: liked ? !liked.liked : false }),
-            );
+            queryClient.setQueryData<{
+                liked: boolean;
+            }>(userLikedKey, (liked) => ({
+                liked: liked ? !liked.liked : false,
+            }));
             queryClient.setQueryData(celebKey, {
                 ...celebProfile,
                 totalLikes:
@@ -322,70 +325,75 @@ export const CommentSection = ({
 
                                     <div className="ml-7">
                                         <div className="flex flex-col gap-4">
-                                            {comment.replies?.map((reply) => (
-                                                <div
-                                                    className="space-y-5"
-                                                    key={reply._id}
-                                                >
-                                                    <CommentContent
-                                                        onLike={() =>
-                                                            onReplyLikeHandler({
-                                                                commentId:
-                                                                    comment._id,
-                                                                replyId:
-                                                                    reply._id,
-                                                            })
-                                                        }
-                                                        onReply={() =>
-                                                            onReplyClickHandler(
-                                                                reply,
-                                                            )
-                                                        }
-                                                        comment={reply}
-                                                        likes={reply.likes}
-                                                    />
+                                            {comment.replies?.map((reply) => {
+                                                const sendReply = () =>
+                                                    onReplySendHandler({
+                                                        parentId: comment._id,
+                                                        repliedComment: reply,
+                                                    });
+                                                return (
+                                                    <div
+                                                        className="space-y-5"
+                                                        key={reply._id}
+                                                    >
+                                                        <CommentContent
+                                                            onLike={() =>
+                                                                onReplyLikeHandler(
+                                                                    {
+                                                                        commentId:
+                                                                            comment._id,
+                                                                        replyId:
+                                                                            reply._id,
+                                                                    },
+                                                                )
+                                                            }
+                                                            onReply={() =>
+                                                                onReplyClickHandler(
+                                                                    reply,
+                                                                )
+                                                            }
+                                                            comment={reply}
+                                                            likes={reply.likes}
+                                                        />
 
-                                                    {replyCommentId ===
-                                                    reply._id ? (
-                                                        <div className="mt-2">
-                                                            <CommentTextarea
-                                                                ref={
-                                                                    replyTextarea
-                                                                }
-                                                                replyName={
-                                                                    comment.author
-                                                                }
-                                                                disabled={
-                                                                    !session
-                                                                }
-                                                                onKeyDown={(
-                                                                    e,
-                                                                ) => {
-                                                                    if (
-                                                                        e.key ===
-                                                                            'Enter' &&
-                                                                        e.altKey
-                                                                    )
-                                                                        onReplySendHandler(
-                                                                            comment,
-                                                                        );
-                                                                }}
-                                                                onCancel={() =>
-                                                                    setReplyCommentId(
-                                                                        null,
-                                                                    )
-                                                                }
-                                                                onSend={() =>
-                                                                    onReplySendHandler(
-                                                                        comment,
-                                                                    )
-                                                                }
-                                                                placeholder="Write a comment..."
-                                                            />
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            ))}
+                                                        {replyCommentId ===
+                                                        reply._id ? (
+                                                            <div className="mt-2">
+                                                                <CommentTextarea
+                                                                    ref={
+                                                                        replyTextarea
+                                                                    }
+                                                                    replyName={
+                                                                        comment.author
+                                                                    }
+                                                                    disabled={
+                                                                        !session
+                                                                    }
+                                                                    onKeyDown={(
+                                                                        e,
+                                                                    ) => {
+                                                                        if (
+                                                                            e.key ===
+                                                                                'Enter' &&
+                                                                            e.altKey
+                                                                        )
+                                                                            sendReply();
+                                                                    }}
+                                                                    onCancel={() =>
+                                                                        setReplyCommentId(
+                                                                            null,
+                                                                        )
+                                                                    }
+                                                                    onSend={() =>
+                                                                        sendReply()
+                                                                    }
+                                                                    placeholder="Write a comment..."
+                                                                />
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
@@ -400,15 +408,21 @@ export const CommentSection = ({
                                                         e.key === 'Enter' &&
                                                         e.altKey
                                                     )
-                                                        onReplySendHandler(
-                                                            comment,
-                                                        );
+                                                        onReplySendHandler({
+                                                            repliedComment:
+                                                                comment,
+                                                            parentId:
+                                                                comment._id,
+                                                        });
                                                 }}
                                                 onCancel={() =>
                                                     setReplyCommentId(null)
                                                 }
                                                 onSend={() =>
-                                                    onReplySendHandler(comment)
+                                                    onReplySendHandler({
+                                                        repliedComment: comment,
+                                                        parentId: comment._id,
+                                                    })
                                                 }
                                                 placeholder="Write a comment..."
                                             />

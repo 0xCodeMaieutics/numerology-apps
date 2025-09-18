@@ -10,7 +10,7 @@ export const CommentContent = (props: {
     onReply?: () => void;
     onLike?: () => void;
 }) => (
-    <div className="space-y-2.5">
+    <div className={'space-y-2.5'}>
         <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
@@ -20,13 +20,29 @@ export const CommentContent = (props: {
                         .join('')
                         .toUpperCase()}
                 </div>
-                <span className="font-semibold">{props.comment.author}</span>
+                <div className="flex flex-col">
+                    <span className="font-semibold">
+                        {props.comment.author}{' '}
+                    </span>
+                    {props.comment.repliedAuthor &&
+                    props.comment.repliedAuthorId ? (
+                        <div className="text-muted-foreground text-xs">
+                            replied to{' '}
+                            <span className="font-semibold">
+                                {props.comment.repliedAuthor}
+                            </span>
+                        </div>
+                    ) : null}
+                </div>
             </div>
+
             <span className="text-sm text-muted-foreground">
                 {dates.formatCommentDate(props.comment.createdAt!)}
             </span>
         </div>
+
         <p>{props.comment.comment}</p>
+
         <div className="flex items-center gap-4">
             <button
                 onClick={props.onReply}
