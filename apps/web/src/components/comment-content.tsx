@@ -40,9 +40,8 @@ export const CommentContent = (props: {
                 {dates.formatCommentDate(props.comment.createdAt!)}
             </span>
         </div>
-        <div className="flex flex-col items-start gap-0.5">
-            <p>{props.comment.comment}</p>
-        </div>
+
+        <p>{props.comment.comment}</p>
 
         <div className="flex items-center gap-4">
             <button
