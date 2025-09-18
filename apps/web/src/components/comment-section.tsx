@@ -63,7 +63,6 @@ export const CommentSection = ({
 
     const [isLoginRequiredAlertDialogOpen, setLoginAlertDialogOpen] =
         useState(false);
-    const [highlightedCommentId, setHighlightedCommentId] = useState<string>();
     const queryClient = useQueryClient();
     const { data: liked } = queryHooks.suspense.useLiked({
         celebrityId: celebProfile.id,
@@ -256,7 +255,6 @@ export const CommentSection = ({
         replyEl.focus();
     };
 
-    console.log(highlightedCommentId);
     return (
         <>
             <div className="flex items-center gap-1.5">
