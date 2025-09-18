@@ -123,6 +123,7 @@ export const nosqlDB = {
           celebrityId: new mongoose.Types.ObjectId(data.celebrityId as string),
           parentId: new mongoose.Types.ObjectId(data.parentId as string),
           level: 1,
+          likes: 0,
         });
       },
       getCommentAndRepliesCount: async (celebrityId: string) => {
