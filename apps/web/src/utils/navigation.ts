@@ -15,6 +15,10 @@ export const navigation = {
     explore: {
         page: '/explore',
     },
+
+    onboarding: {
+        page: '/onboarding',
+    },
     celebrity: {
         detail: (id: string) => `/celebrity/${id}`,
     },

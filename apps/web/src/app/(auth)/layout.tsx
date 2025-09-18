@@ -1,26 +1,24 @@
-'use client';
+import { sqlDB } from '@workspace/db/sql';
+import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-import dynamic from 'next/dynamic';
+import { auth } from '@/lib/auth';
 
-const HeaderWithNoSSR = dynamic(() => import('../../components/header'), {
-    ssr: false,
-});
+import { LayoutContent } from './_/layout-content';
 
-const SidebarWithNoSSR = dynamic(() => import('../../components/side-bar'), {
-    ssr: false,
-});
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return (
-        <>
-            <HeaderWithNoSSR />
-            <main className="flex gap-2 md:gap-10 lg:gap-0 py-24 w-full max-w-6xl mx-auto px-4">
-                <SidebarWithNoSSR />
-                {children}
-            </main>
-        </>
-    );
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (session?.user.id) {
+        const user = await sqlDB.user.select.id(session.user.id)
+        if (!user?.birthDate) redirect('/onboarding');
+    }
+    return <LayoutContent>{children}</LayoutContent>;
 }
