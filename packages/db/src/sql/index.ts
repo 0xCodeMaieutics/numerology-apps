@@ -71,7 +71,16 @@ export const sqlDB = {
           .select({ count: count() })
           .from(userTable)
           .then((res) => res?.[0]?.count ?? 0),
+      id: (id: string) =>
+        sqlClient
+          .select()
+          .from(sqlDB.schema.user)
+          .where(eq(sqlDB.schema.user.id, id))
+          .limit(1)
+          .then((res) => res[0]),
     },
+    update: (userId: string, data: Partial<SQLDBQueries["insert"]["user"]>) =>
+      sqlClient.update(userTable).set(data).where(eq(userTable.id, userId)),
   },
 };
 

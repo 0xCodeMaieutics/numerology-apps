@@ -21,6 +21,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 
+import { navigation } from '@/utils/navigation';
+
 import { authClient } from '@/lib/auth-client';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -51,6 +53,8 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
+const REDIRECT_SUCCESS_PATH = navigation.onboarding.page;
+
 export const ClientContent = () => {
     const params = useSearchParams();
     const router = useRouter();
@@ -60,6 +64,7 @@ export const ClientContent = () => {
         ['http://', 'https://']
             .map((prefix) => redirect.startsWith(prefix))
             .some(Boolean);
+
     const { mutate: signInWithGoogle, isPending: isGooglePending } =
         useMutation({
             mutationFn: () => {
@@ -67,15 +72,17 @@ export const ClientContent = () => {
                 const isVulnerableRedirect = redirect
                     ? isRedirectVulnerable(redirect)
                     : false;
+
                 return authClient.signIn.social({
                     provider: 'google',
                     callbackURL: redirect
                         ? isVulnerableRedirect
-                            ? '/'
+                            ? REDIRECT_SUCCESS_PATH
                             : redirect
-                        : '/',
+                        : REDIRECT_SUCCESS_PATH,
                 });
             },
+
             onError: () => {
                 toast('Failed to sign in with Google');
             },
@@ -107,11 +114,10 @@ export const ClientContent = () => {
         onSuccess: () => {
             const redirect = params.get('redirect');
             if (redirect) {
-                if (isRedirectVulnerable(redirect)) router.push('/');
+                if (isRedirectVulnerable(redirect))
+                    router.push(REDIRECT_SUCCESS_PATH);
                 else router.push(redirect);
-            } else {
-                router.push('/');
-            }
+            } else router.push(REDIRECT_SUCCESS_PATH);
         },
         onError: () => {
             toast('Failed to sign in with Email');
