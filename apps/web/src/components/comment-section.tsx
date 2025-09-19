@@ -15,25 +15,23 @@ import { likeCelebrity } from '@/utils/server-actions/liked-celebrity';
 import { replyServerAction } from '@/utils/server-actions/reply';
 import { sleep } from '@/utils/sleep';
 
+import { useCelebrityProps } from '@/lib/context/celebrity-props';
+
 import { CommentContent } from './comment-content';
 import { CommentTextarea } from './comment-textarea';
 import { EmptyComments } from './empty-comments';
 import { LoginRequiredAlertDialog } from './login-required-alert-dialog';
 
-export const CommentSection = ({
-    celebrityId,
-    userId,
-}: {
-    celebrityId: string;
-    userId?: string;
-}) => {
+export const CommentSection = () => {
+    const celebrityProps = useCelebrityProps();
+    const session = queryHooks.suspense.useAuthSession();
     const { mutate: likeComment } =
         queryHooks.mutation.celebrity.useLikeComment({
             onSuccess: () => {
                 queryClient.invalidateQueries({
                     queryKey: queryKeys.comments({
-                        celebrityId,
-                        userId,
+                        celebrityId: celebrityProps.celebProfile.id,
+                        userId: session?.data?.user.id,
                     }),
                 });
             },
@@ -47,8 +45,8 @@ export const CommentSection = ({
             onSuccess: () => {
                 queryClient.invalidateQueries({
                     queryKey: queryKeys.comments({
-                        celebrityId,
-                        userId,
+                        celebrityId: celebrityProps.celebProfile.id,
+                        userId: session?.data?.user.id,
                     }),
                 });
             },
@@ -57,16 +55,16 @@ export const CommentSection = ({
             },
         });
 
-    const { data: celebProfile } =
-        queryHooks.suspense.useCelebrity(celebrityId);
-    const { data: session } = queryHooks.suspense.useAuthSession(userId);
+    const { data: celebProfile } = queryHooks.suspense.useCelebrity(
+        celebrityProps.celebProfile.id,
+    );
 
     const [isLoginRequiredAlertDialogOpen, setLoginAlertDialogOpen] =
         useState(false);
     const queryClient = useQueryClient();
     const { data: liked } = queryHooks.suspense.useLiked({
         celebrityId: celebProfile.id,
-        userId: session?.user.id as string,
+        userId: session?.data?.user.id as string,
     });
     const [replyCommentId, setReplyCommentId] = useState<string | null>(null);
 
@@ -75,7 +73,7 @@ export const CommentSection = ({
 
     const { data: comments } = queryHooks.suspense.useComments({
         celebrityId: celebProfile.id,
-        userId: session?.user?.id,
+        userId: session?.data?.user.id,
     });
     const textarea = useRef<HTMLTextAreaElement>(null);
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
@@ -94,9 +92,9 @@ export const CommentSection = ({
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
         await replyServerAction({
-            author: session.user.name || 'Anonymous',
+            author: session?.data?.user.name || 'Anonymous',
             parentId,
-            authorId: session?.user.id,
+            authorId: session?.data?.user.id,
             celebrityId: celebProfile.id,
             comment: value,
             repliedAuthor: repliedComment.author,
@@ -114,7 +112,7 @@ export const CommentSection = ({
         queryClient.invalidateQueries({
             queryKey: queryKeys.comments({
                 celebrityId: celebProfile.id,
-                userId: session?.user?.id,
+                userId: session?.data?.user.id,
             }),
         });
     };
@@ -126,7 +124,7 @@ export const CommentSection = ({
         }
         const userLikedKey = queryKeys
             .celebrity(celebProfile.id)
-            .users(session.user.id)
+            .users(session?.data?.user.id)
             .liked();
         const celebKey = queryKeys.celebrity(celebProfile.id).default;
         queryClient.setQueryData<{
@@ -141,12 +139,13 @@ export const CommentSection = ({
                 (celebProfile?.totalLikes ?? 0) + (liked.liked ? -1 : 1),
         });
         try {
+            if (!session?.data?.user.id) throw new Error('User not logged in');
             // TODO: implement mutation
             await likeCelebrity({
                 celebrityId: celebProfile.id,
                 prevLikes: celebProfile.totalLikes ?? 0,
                 oldLiked: liked.liked,
-                userId: session.user.id,
+                userId: session?.data?.user.id,
             });
         } catch (err) {
             toast.error('Something went wrong');
@@ -164,39 +163,44 @@ export const CommentSection = ({
     };
 
     const onCommentHandler = async () => {
-        if (!session) {
+        if (!session.data || !session.data?.user.id) {
             setLoginAlertDialogOpen(true);
             return;
         }
         const value = textarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        // TODO: implement mutation
-        await commentServerAction({
-            author: session.user.name || 'Anonymous',
-            authorId: session.user.id,
-            celebrityId: celebProfile.id,
-            comment: value ?? '',
-            likes: 0,
-            level: 0,
-            userId: session.user.id,
-        });
-        textarea.current!.value = '';
-
-        queryClient.setQueryData(
-            queryKeys.celebrity(celebProfile.id).commentsCount,
-            (old: number | undefined) => (old ?? 0) + 1,
-        );
-
-        queryClient.invalidateQueries({
-            queryKey: queryKeys.comments({
+        try {
+            // TODO: implement mutation
+            await commentServerAction({
+                author: session?.data?.user.name || 'Anonymous',
+                authorId: session?.data?.user.id,
                 celebrityId: celebProfile.id,
-                userId: session?.user?.id,
-            }),
-        });
+                comment: value ?? '',
+                likes: 0,
+                level: 0,
+                userId: session?.data?.user.id,
+            });
+            textarea.current!.value = '';
+
+            queryClient.setQueryData(
+                queryKeys.celebrity(celebProfile.id).commentsCount,
+                (old: number | undefined) => (old ?? 0) + 1,
+            );
+
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.comments({
+                    celebrityId: celebProfile.id,
+                    userId: session?.data?.user.id,
+                }),
+            });
+        } catch (error) {
+            toast.error('Something went wrong');
+        }
     };
 
     const onCommentLikeHandler = async (commentId: string) => {
-        if (!session) return setLoginAlertDialogOpen(true);
+        if (!session.data || !session.data?.user.id)
+            return setLoginAlertDialogOpen(true);
 
         const foundComment = comments?.find(
             (comment) => comment._id === commentId,
@@ -206,12 +210,12 @@ export const CommentSection = ({
         if (foundComment.isLikedByUser) {
             unlikeComment({
                 commentId,
-                userId: session.user.id,
+                userId: session.data?.user.id,
             });
         } else {
             likeComment({
                 commentId,
-                userId: session.user.id,
+                userId: session.data?.user.id,
             });
         }
     };
@@ -223,7 +227,8 @@ export const CommentSection = ({
         commentId: string;
         replyId: string;
     }) => {
-        if (!session) return setLoginAlertDialogOpen(true);
+        if (!session.data || !session.data?.user.id)
+            return setLoginAlertDialogOpen(true);
         const foundComment = comments?.find(
             (comment) => comment._id === commentId,
         );
@@ -235,12 +240,12 @@ export const CommentSection = ({
         if (foundReply.isLikedByUser) {
             unlikeComment({
                 commentId: replyId,
-                userId: session.user.id,
+                userId: session.data?.user.id,
             });
         } else {
             likeComment({
                 commentId: replyId,
-                userId: session.user.id,
+                userId: session.data?.user.id,
             });
         }
     };
@@ -441,7 +446,6 @@ export const CommentSection = ({
             <LoginRequiredAlertDialog
                 open={isLoginRequiredAlertDialogOpen}
                 onOpenChange={setLoginAlertDialogOpen}
-                celebrityId={celebrityId}
             />
         </>
     );
