@@ -7,12 +7,9 @@ import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
 import { Heart, MessageCircle, Share } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { RefObject, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { commentServerAction } from '@/utils/server-actions/comment';
-import { likeCelebrity } from '@/utils/server-actions/liked-celebrity';
-import { replyServerAction } from '@/utils/server-actions/reply';
 import { sleep } from '@/utils/sleep';
 
 import { useCelebrityProps } from '@/lib/context/celebrity-props';
@@ -22,9 +19,76 @@ import { CommentTextarea } from './comment-textarea';
 import { EmptyComments } from './empty-comments';
 import { LoginRequiredAlertDialog } from './login-required-alert-dialog';
 
+const DEFAULT_SKIP = 0;
+const DEFAULT_LIMIT = 5;
+
 export const CommentSection = () => {
+    const [skip, setSkip] = useState(DEFAULT_SKIP);
     const celebrityProps = useCelebrityProps();
     const session = queryHooks.suspense.useAuthSession();
+    const commentCounts = queryHooks.query.comments.useCount();
+    const { mutate: likeCelebrity } =
+        queryHooks.mutation.celebrity.useLikeCelebrity({
+            onSuccess: () => {
+                const userLikedKey = queryKeys
+                    .celebrity(celebProfile.id)
+                    .users(session?.data?.user.id)
+                    .liked();
+                const celebKey = queryKeys.celebrity(celebProfile.id).default;
+                queryClient.setQueryData<{
+                    liked: boolean;
+                }>(userLikedKey, (liked) => ({
+                    liked: liked ? !liked.liked : false,
+                }));
+
+                queryClient.setQueryData(celebKey, {
+                    ...celebProfile,
+                    totalLikes:
+                        (celebProfile?.totalLikes ?? 0) +
+                        (liked.liked ? -1 : 1),
+                });
+            },
+            onError: () => {
+                const userLikedKey = queryKeys
+                    .celebrity(celebProfile.id)
+                    .users(session?.data?.user.id)
+                    .liked();
+                const celebKey = queryKeys.celebrity(celebProfile.id).default;
+                queryClient.setQueryData<{
+                    liked: boolean;
+                }>(userLikedKey, (liked) => ({
+                    liked: liked ? !liked.liked : false,
+                }));
+                queryClient.setQueryData(celebKey, {
+                    ...celebProfile,
+                    totalLikes:
+                        (celebProfile?.totalLikes ?? 0) +
+                        (liked.liked ? -1 : 1),
+                });
+                toast.error('Something went wrong');
+            },
+        });
+
+    const { mutate: relyCommentMutate } =
+        queryHooks.mutation.comments.useReplyComment({
+            onSuccess: ({ replyTextarea }) => {
+                replyTextarea.current!.value = '';
+                setReplyCommentId(null);
+                queryClient.setQueryData(
+                    queryKeys.celebrity(celebProfile.id).commentsCount,
+                    (old: number | undefined) => (old ?? 0) + 1,
+                );
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.comments({
+                        celebrityId: celebProfile.id,
+                        userId: session?.data?.user.id,
+                    }),
+                });
+            },
+            onError: () => {
+                toast.error('Reply failed to post');
+            },
+        });
     const { mutate: likeComment } =
         queryHooks.mutation.celebrity.useLikeComment({
             onSuccess: () => {
@@ -55,6 +119,26 @@ export const CommentSection = () => {
             },
         });
 
+    const { mutate: mutateComment } = queryHooks.mutation.comments.useComment({
+        onSuccess: () => {
+            textarea.current!.value = '';
+            queryClient.setQueryData(
+                queryKeys.celebrity(celebProfile.id).commentsCount,
+                (old: number | undefined) => (old ?? 0) + 1,
+            );
+
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.comments({
+                    celebrityId: celebProfile.id,
+                    userId: session?.data?.user.id,
+                }),
+            });
+        },
+        onError: () => {
+            toast.error('Comment failed to post');
+        },
+    });
+
     const { data: celebProfile } = queryHooks.suspense.useCelebrity(
         celebrityProps.celebProfile.id,
     );
@@ -72,48 +156,39 @@ export const CommentSection = () => {
         queryHooks.suspense.useCelebrityCommentsCount(celebProfile.id);
 
     const { data: comments } = queryHooks.suspense.useComments({
-        celebrityId: celebProfile.id,
-        userId: session?.data?.user.id,
+        skip,
+        limit: DEFAULT_LIMIT,
+        replySkip: 0,
+        replyLimit: 3,
+        sortBy: {
+            createdAt: 'desc',
+            replyCreatedAt: 'asc',
+        },
     });
     const textarea = useRef<HTMLTextAreaElement>(null);
     const replyTextarea = useRef<HTMLTextAreaElement>(null);
+    const replyTextarea2 = useRef<HTMLTextAreaElement>(null);
 
     const onReplySendHandler = async ({
         parentId,
         repliedComment,
+        replyTextarea,
     }: {
         parentId: string;
         repliedComment: IReply | IComment;
+        replyTextarea: RefObject<HTMLTextAreaElement | null>;
     }) => {
         if (!session) return;
-
         if (!replyCommentId) return;
 
         const value = replyTextarea.current?.value?.trim() ?? '';
         if (value?.length === 0) return;
-        await replyServerAction({
-            author: session?.data?.user.name || 'Anonymous',
-            parentId,
-            authorId: session?.data?.user.id,
-            celebrityId: celebProfile.id,
+
+        relyCommentMutate({
             comment: value,
-            repliedAuthor: repliedComment.author,
-            repliedAuthorId: repliedComment.authorId,
-        });
-        replyTextarea.current!.value = '';
-
-        setReplyCommentId(null);
-
-        queryClient.setQueryData(
-            queryKeys.celebrity(celebProfile.id).commentsCount,
-            (old: number | undefined) => (old ?? 0) + 1,
-        );
-
-        queryClient.invalidateQueries({
-            queryKey: queryKeys.comments({
-                celebrityId: celebProfile.id,
-                userId: session?.data?.user.id,
-            }),
+            parentId,
+            repliedComment,
+            replyTextarea,
         });
     };
 
@@ -122,44 +197,10 @@ export const CommentSection = () => {
             setLoginAlertDialogOpen(true);
             return;
         }
-        const userLikedKey = queryKeys
-            .celebrity(celebProfile.id)
-            .users(session?.data?.user.id)
-            .liked();
-        const celebKey = queryKeys.celebrity(celebProfile.id).default;
-        queryClient.setQueryData<{
-            liked: boolean;
-        }>(userLikedKey, (liked) => ({
-            liked: liked ? !liked.liked : false,
-        }));
-
-        queryClient.setQueryData(celebKey, {
-            ...celebProfile,
-            totalLikes:
-                (celebProfile?.totalLikes ?? 0) + (liked.liked ? -1 : 1),
+        likeCelebrity({
+            prevLikes: celebProfile.totalLikes ?? 0,
+            liked: liked.liked,
         });
-        try {
-            if (!session?.data?.user.id) throw new Error('User not logged in');
-            // TODO: implement mutation
-            await likeCelebrity({
-                celebrityId: celebProfile.id,
-                prevLikes: celebProfile.totalLikes ?? 0,
-                oldLiked: liked.liked,
-                userId: session?.data?.user.id,
-            });
-        } catch (err) {
-            toast.error('Something went wrong');
-            queryClient.setQueryData<{
-                liked: boolean;
-            }>(userLikedKey, (liked) => ({
-                liked: liked ? !liked.liked : false,
-            }));
-            queryClient.setQueryData(celebKey, {
-                ...celebProfile,
-                totalLikes:
-                    (celebProfile?.totalLikes ?? 0) + (liked.liked ? -1 : 1),
-            });
-        }
     };
 
     const onCommentHandler = async () => {
@@ -167,35 +208,8 @@ export const CommentSection = () => {
             setLoginAlertDialogOpen(true);
             return;
         }
-        const value = textarea.current?.value?.trim() ?? '';
-        if (value?.length === 0) return;
-        try {
-            // TODO: implement mutation
-            await commentServerAction({
-                author: session?.data?.user.name || 'Anonymous',
-                authorId: session?.data?.user.id,
-                celebrityId: celebProfile.id,
-                comment: value ?? '',
-                likes: 0,
-                level: 0,
-                userId: session?.data?.user.id,
-            });
-            textarea.current!.value = '';
-
-            queryClient.setQueryData(
-                queryKeys.celebrity(celebProfile.id).commentsCount,
-                (old: number | undefined) => (old ?? 0) + 1,
-            );
-
-            queryClient.invalidateQueries({
-                queryKey: queryKeys.comments({
-                    celebrityId: celebProfile.id,
-                    userId: session?.data?.user.id,
-                }),
-            });
-        } catch (error) {
-            toast.error('Something went wrong');
-        }
+        if (textarea.current?.value?.length === 0) return;
+        mutateComment(textarea.current?.value ?? '');
     };
 
     const onCommentLikeHandler = async (commentId: string) => {
@@ -206,17 +220,10 @@ export const CommentSection = () => {
             (comment) => comment._id === commentId,
         );
         if (!foundComment || typeof foundComment.likes !== 'number') return;
-
         if (foundComment.isLikedByUser) {
-            unlikeComment({
-                commentId,
-                userId: session.data?.user.id,
-            });
+            unlikeComment(commentId);
         } else {
-            likeComment({
-                commentId,
-                userId: session.data?.user.id,
-            });
+            likeComment(commentId);
         }
     };
 
@@ -238,25 +245,25 @@ export const CommentSection = () => {
         );
         if (!foundReply || typeof foundReply.likes !== 'number') return;
         if (foundReply.isLikedByUser) {
-            unlikeComment({
-                commentId: replyId,
-                userId: session.data?.user.id,
-            });
+            unlikeComment(replyId);
         } else {
-            likeComment({
-                commentId: replyId,
-                userId: session.data?.user.id,
-            });
+            likeComment(replyId);
         }
     };
 
-    const onReplyClickHandler = async (comment: IReply | IComment) => {
+    const onReplyClickHandler = async ({
+        comment,
+        textAreaEl,
+    }: {
+        comment: IReply | IComment;
+        textAreaEl: RefObject<HTMLTextAreaElement | null>;
+    }) => {
         if (!session) return setLoginAlertDialogOpen(true);
-        const replyEl = replyTextarea.current;
         setReplyCommentId(comment._id);
-        if (!replyEl) await sleep(50);
-        if (!replyEl) return;
-        replyEl.focus();
+        if (!textAreaEl.current) {
+            await sleep(100);
+        }
+        if (textAreaEl.current) textAreaEl.current.focus();
     };
 
     return (
@@ -308,6 +315,12 @@ export const CommentSection = () => {
                 {comments && comments.length > 0 ? (
                     <div className="flex flex-col gap-4">
                         {comments.map((comment) => {
+                            const sendReply = () =>
+                                onReplySendHandler({
+                                    parentId: comment._id,
+                                    repliedComment: comment,
+                                    replyTextarea,
+                                });
                             return (
                                 <div
                                     key={comment._id}
@@ -319,9 +332,10 @@ export const CommentSection = () => {
                                         }
                                         likes={comment.likes}
                                         onReply={() =>
-                                            onReplyClickHandler(
-                                                comment as IComment,
-                                            )
+                                            onReplyClickHandler({
+                                                comment,
+                                                textAreaEl: replyTextarea,
+                                            })
                                         }
                                         comment={comment}
                                     />
@@ -336,6 +350,8 @@ export const CommentSection = () => {
                                                     onReplySendHandler({
                                                         parentId: comment._id,
                                                         repliedComment: reply,
+                                                        replyTextarea:
+                                                            replyTextarea2,
                                                     });
                                                 return (
                                                     <div
@@ -355,7 +371,12 @@ export const CommentSection = () => {
                                                             }
                                                             onReply={() =>
                                                                 onReplyClickHandler(
-                                                                    reply,
+                                                                    {
+                                                                        comment:
+                                                                            reply,
+                                                                        textAreaEl:
+                                                                            replyTextarea2,
+                                                                    },
                                                                 )
                                                             }
                                                             comment={reply}
@@ -367,7 +388,7 @@ export const CommentSection = () => {
                                                             <div className="mt-2">
                                                                 <CommentTextarea
                                                                     ref={
-                                                                        replyTextarea
+                                                                        replyTextarea2
                                                                     }
                                                                     replyName={
                                                                         comment.author
@@ -414,22 +435,12 @@ export const CommentSection = () => {
                                                         e.key === 'Enter' &&
                                                         e.altKey
                                                     )
-                                                        onReplySendHandler({
-                                                            repliedComment:
-                                                                comment,
-                                                            parentId:
-                                                                comment._id,
-                                                        });
+                                                        sendReply();
                                                 }}
                                                 onCancel={() =>
                                                     setReplyCommentId(null)
                                                 }
-                                                onSend={() =>
-                                                    onReplySendHandler({
-                                                        repliedComment: comment,
-                                                        parentId: comment._id,
-                                                    })
-                                                }
+                                                onSend={sendReply}
                                                 placeholder="Write a comment..."
                                             />
                                         </div>
@@ -437,7 +448,9 @@ export const CommentSection = () => {
                                 </div>
                             );
                         })}
-                        <button>Load more</button>
+                        {(commentCounts?.data ?? 0) > DEFAULT_LIMIT ? (
+                            <button>Load more</button>
+                        ) : null}
                     </div>
                 ) : (
                     <EmptyComments />

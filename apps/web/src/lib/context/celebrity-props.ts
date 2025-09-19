@@ -1,3 +1,4 @@
+'use client'
 import { SQLDBQueries } from '@workspace/db/sql';
 import { createContext, useContext } from 'react';
 
