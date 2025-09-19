@@ -112,10 +112,13 @@ describe("CelebrityComment", async () => {
         TOTAL_REPLIES - replySkip > replyLimit
           ? replyLimit
           : TOTAL_REPLIES - replySkip;
-      expect(firstComment?.replies.length).toBe(totalReply);
+      expect(firstComment?.replies?.length).toBe(totalReply);
       expect(firstComment?.parentId).toBeNull();
       expect(firstComment?.celebrityId.toString()).toBe(celebrityId.toString());
       expect(firstComment?.isLikedByUser).toBeUndefined();
+      expect(firstComment?.hasMoreReplies).toBe(
+        replySkip + replyLimit < TOTAL_REPLIES
+      );
 
       expect(firstReply?.isLikedByUser).toBeUndefined();
       expect(firstReply?.celebrityId).toBe(celebrityId);
@@ -154,7 +157,9 @@ describe("CelebrityComment", async () => {
     })
       .then(() => nosqlDB.models.CelebrityComment.findById(replyId))
       .then((updatedReply) => {
-        expect(updatedReply?.repliedAuthor).toBe("Test Author");
+        if (updatedReply?.level === 1) {
+          expect(updatedReply?.repliedAuthor).toBe("Test Author");
+        }
         expect(updatedReply?.parentId?.toString()).toBe(parentId);
         return updatedReply;
       })

@@ -1,6 +1,6 @@
 import mongoose, { Model, Types } from "mongoose";
 
-export interface ICelebrityCommentBase {
+export interface IBaseMongoDB {
   _id: Types.ObjectId;
   celebrityId: Types.ObjectId;
   parentId?: Types.ObjectId;
@@ -13,55 +13,39 @@ export interface ICelebrityCommentBase {
   likesCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
-  repliedAuthor?: string;
-  repliedAuthorId?: string; // user id stored in sql user table
   __v?: number;
 }
 
-export type ICelebrityCommentBaseWithoutObjectId = Omit<
-  ICelebrityCommentBase,
-  "_id" | "celebrityId" | "parentId"
-> & {
+export type IReplyMongoDB = {
+  repliedAuthor?: string;
+  repliedAuthorId?: string;
+};
+
+type IBase = Omit<IBaseMongoDB, "_id" | "celebrityId" | "parentId"> & {
   _id: string;
   celebrityId: string;
   parentId?: string;
 };
 
-export interface ICelebrityCommentWithoutObjectId
-  extends ICelebrityCommentBaseWithoutObjectId {
-  replies: ICelebrityCommentBaseWithoutObjectId[];
-  replyCount?: number;
+export type IReply = IBase &
+  IReplyMongoDB & {
+    level: 1;
+  };
+
+export type IComment = IBase & {
+  level: 0;
   hasMoreReplies?: boolean;
-}
+  replies?: IReply[];
+};
 
-export interface ICelebrityComment extends ICelebrityCommentBase {
-  replies: ICelebrityCommentBase[];
-}
-
-export interface ICelebrityCommentWrite {
-  celebrityId: string | Types.ObjectId;
-  parentId?: string | Types.ObjectId | null; // For replies
-  author: string;
-  authorId: string;
-  comment: string;
-  likes?: number;
-  level?: number; // Will be calculated automatically
-}
-
-export interface ICelebrityReplyWrite {
-  parentId: string | Types.ObjectId; // Required for replies
-  celebrityId: string | Types.ObjectId;
-  author: string;
-  authorId: string;
-  comment: string;
-  repliedAuthor: string;
-  repliedAuthorId: string;
-  likes?: number;
-}
+export type ICommentWrite = Partial<IBase>;
+export type IReplyWrite = Partial<IBase> & IReplyMongoDB;
 
 export const CELEBRITY_COMMENTS_COLLECTION = "celebrity_comments";
 
-const CelebrityCommentSchema = new mongoose.Schema<ICelebrityComment>(
+const CelebrityCommentSchema = new mongoose.Schema<
+  IBaseMongoDB & IReplyMongoDB
+>(
   {
     celebrityId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -95,7 +79,7 @@ const CelebrityCommentSchema = new mongoose.Schema<ICelebrityComment>(
 );
 
 const model =
-  (mongoose.models.CelebrityComment as Model<ICelebrityComment>) ||
-  mongoose.model<ICelebrityComment>("CelebrityComment", CelebrityCommentSchema);
+  (mongoose.models.CelebrityComment as Model<IBaseMongoDB>) ||
+  mongoose.model<IBaseMongoDB>("CelebrityComment", CelebrityCommentSchema);
 
 export default model;

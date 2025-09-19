@@ -1,10 +1,10 @@
 import mongoose, { PipelineStage, Types } from "mongoose";
 import {
   CELEBRITY_COMMENTS_COLLECTION,
-  ICelebrityComment,
-  ICelebrityCommentWithoutObjectId,
-  ICelebrityCommentWrite,
-  ICelebrityReplyWrite,
+  IComment,
+  IReply,
+  ICommentWrite,
+  IReplyWrite,
 } from "./schema/celebrity-comment";
 import CelebrityComment from "./schema/celebrity-comment";
 import CommentLike, { COMMENT_LIKES_COLLECTION } from "./schema/comment-like";
@@ -12,18 +12,12 @@ import connect from "./connect";
 
 export type NoSQLQueries = {
   CelebrityComment: {
-    create: mongoose.Document<unknown, {}, ICelebrityComment, {}, {}> &
-      ICelebrityCommentWithoutObjectId & {
+    create: mongoose.Document<unknown, {}, IComment, {}, {}> &
+      IReply & {
         _id: mongoose.Types.ObjectId;
       };
-    findByCelebrityId: (mongoose.Document<
-      unknown,
-      {},
-      ICelebrityCommentWithoutObjectId,
-      {},
-      {}
-    > &
-      ICelebrityCommentWithoutObjectId)[];
+    findByCelebrityId: (mongoose.Document<unknown, {}, IReply, {}, {}> &
+      IReply)[];
   };
 };
 
@@ -33,7 +27,7 @@ export const nosqlDB = {
   CommentLike,
   models: {
     CelebrityComment: {
-      findById: async (id: string) => {
+      findById: async (id: string): Promise<IComment | IReply | null> => {
         await connect();
         return CelebrityComment.findById(new mongoose.Types.ObjectId(id));
       },
@@ -107,7 +101,7 @@ export const nosqlDB = {
           );
         });
       },
-      createTopLevel: async (data: ICelebrityCommentWrite) => {
+      createTopLevel: async (data: ICommentWrite) => {
         await connect();
         return CelebrityComment.create({
           ...data,
@@ -116,7 +110,7 @@ export const nosqlDB = {
           level: 0,
         });
       },
-      createReply: async (data: ICelebrityReplyWrite) => {
+      createReply: async (data: IReplyWrite) => {
         await connect();
         return CelebrityComment.create({
           ...data,
@@ -130,6 +124,13 @@ export const nosqlDB = {
         await connect();
         return CelebrityComment.countDocuments({
           celebrityId: new mongoose.Types.ObjectId(celebrityId),
+        });
+      },
+      getCommentsCount: async (celebrityId: string) => {
+        await connect();
+        return CelebrityComment.countDocuments({
+          celebrityId: new mongoose.Types.ObjectId(celebrityId),
+          parentId: null,
         });
       },
       findCommentsByCelebrityId: async (celebrityId: string) => {
@@ -150,7 +151,7 @@ export const nosqlDB = {
             replyCreatedAt?: "asc" | "desc";
           };
         } = {}
-      ): Promise<ICelebrityCommentWithoutObjectId[]> => {
+      ): Promise<IComment[]> => {
         await connect();
         const {
           skip = 0,
@@ -329,6 +330,7 @@ export const nosqlDB = {
                       0,
                     ],
                   },
+                  // total=30; 0 + 10 = 10; 10 + 10 =20; 20 + 10=30;
                   { $add: [replySkip, replyLimit] },
                 ],
               },
@@ -398,9 +400,8 @@ export const nosqlDB = {
 };
 
 export type {
-  ICelebrityComment,
-  ICelebrityCommentWrite,
-  ICelebrityReplyWrite,
-  ICelebrityCommentWithoutObjectId,
-  ICelebrityCommentBaseWithoutObjectId,
+  IComment,
+  ICommentWrite,
+  IReplyWrite,
+  IReply,
 } from "./schema/celebrity-comment";

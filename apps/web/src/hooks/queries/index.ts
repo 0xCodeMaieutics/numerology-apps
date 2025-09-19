@@ -1,6 +1,6 @@
 import { frontendDomain } from '@/constants';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { NoSQLQueries } from '@workspace/db/nosql';
+import { IComment } from '@workspace/db/nosql';
 import { SQLDBQueries } from '@workspace/db/sql';
 import 'better-auth';
 
@@ -58,11 +58,7 @@ export const queryHooks = {
             celebrityId: string;
             userId?: string;
         }) =>
-            useSuspenseQuery<
-                unknown,
-                Error,
-                NoSQLQueries['CelebrityComment']['findByCelebrityId']
-            >({
+            useSuspenseQuery<unknown, Error, IComment[]>({
                 queryKey: queryKeys.comments({
                     celebrityId,
                     userId,

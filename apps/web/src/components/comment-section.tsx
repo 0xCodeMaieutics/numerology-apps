@@ -2,7 +2,7 @@
 
 import { queryHooks, queryKeys } from '@/hooks/queries';
 import { useQueryClient } from '@tanstack/react-query';
-import { ICelebrityCommentBaseWithoutObjectId } from '@workspace/db/nosql';
+import { IComment, IReply } from '@workspace/db/nosql';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { cn } from '@workspace/ui/lib/utils';
@@ -85,7 +85,7 @@ export const CommentSection = ({
         repliedComment,
     }: {
         parentId: string;
-        repliedComment: ICelebrityCommentBaseWithoutObjectId;
+        repliedComment: IReply | IComment;
     }) => {
         if (!session) return;
 
@@ -177,6 +177,7 @@ export const CommentSection = ({
             celebrityId: celebProfile.id,
             comment: value ?? '',
             likes: 0,
+            level: 0,
             userId: session.user.id,
         });
         textarea.current!.value = '';
@@ -244,9 +245,7 @@ export const CommentSection = ({
         }
     };
 
-    const onReplyClickHandler = async (
-        comment: ICelebrityCommentBaseWithoutObjectId,
-    ) => {
+    const onReplyClickHandler = async (comment: IReply | IComment) => {
         if (!session) return setLoginAlertDialogOpen(true);
         const replyEl = replyTextarea.current;
         setReplyCommentId(comment._id);
@@ -315,11 +314,13 @@ export const CommentSection = ({
                                         }
                                         likes={comment.likes}
                                         onReply={() =>
-                                            onReplyClickHandler(comment)
+                                            onReplyClickHandler(
+                                                comment as IComment,
+                                            )
                                         }
                                         comment={comment}
                                     />
-                                    {comment?.replies?.length > 0 ? (
+                                    {(comment?.replies?.length ?? 0) > 0 ? (
                                         <Separator />
                                     ) : null}
 
@@ -431,6 +432,7 @@ export const CommentSection = ({
                                 </div>
                             );
                         })}
+                        <button>Load more</button>
                     </div>
                 ) : (
                     <EmptyComments />
