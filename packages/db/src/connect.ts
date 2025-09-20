@@ -17,7 +17,7 @@ void (async function connectTest() {
   });
   console.log("MongoDB connected");
 
-  await nosqlDB.User.create({
+  await nosqlDB.CelebrityComment.create({
     _id: new mongoose.Types.ObjectId(),
     name: "test",
   });

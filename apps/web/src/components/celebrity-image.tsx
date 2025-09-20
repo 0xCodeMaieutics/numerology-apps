@@ -1,4 +1,3 @@
-import { SQLDBQueries } from '@workspace/db/sql';
 import {
     Tooltip,
     TooltipContent,
@@ -10,9 +9,10 @@ import Image from 'next/image';
 
 import { getMasterNumberTooltipElement } from '@/utils/get-master-number-tool-tip-element';
 
-export const CelebrityImage = (props: {
-    celebProfile: SQLDBQueries['select']['celebrities'];
-}) => {
+import { useCelebrityProps } from '@/lib/context/celebrity-props';
+
+export const CelebrityImage = () => {
+    const props = useCelebrityProps();
     const lifePathNumber = numerology.calculateLifePath(
         props.celebProfile.birthDay.toString(),
         props.celebProfile.birthMonth.toString(),

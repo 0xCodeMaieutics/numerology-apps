@@ -1,11 +1,11 @@
-import { ICelebrityCommentBaseWithoutObjectId } from '@workspace/db/nosql';
+import { IComment, IReply } from '@workspace/db/nosql';
 import { cn } from '@workspace/ui/lib/utils';
 import { Heart, MessageCircle } from 'lucide-react';
 
 import { dates } from '@/utils/date';
 
 export const CommentContent = (props: {
-    comment: ICelebrityCommentBaseWithoutObjectId;
+    comment: IComment | IReply;
     likes: number;
     onReply?: () => void;
     onLike?: () => void;
@@ -24,12 +24,12 @@ export const CommentContent = (props: {
                     <span className="font-semibold">
                         {props.comment.author}{' '}
                     </span>
-                    {props.comment.repliedAuthor &&
-                    props.comment.repliedAuthorId ? (
+                    {(props.comment as IReply).repliedAuthor &&
+                    (props.comment as IReply).repliedAuthorId ? (
                         <div className="text-muted-foreground text-xs">
                             replied to{' '}
                             <span className="font-semibold">
-                                {props.comment.repliedAuthor}
+                                {(props.comment as IReply).repliedAuthor}
                             </span>
                         </div>
                     ) : null}

@@ -1,9 +1,9 @@
 'use server';
 
-import { ICelebrityReplyWrite, nosqlDB } from '@workspace/db/nosql';
+import { IReplyWrite, nosqlDB } from '@workspace/db/nosql';
 import { revalidatePath } from 'next/cache';
 
-export const replyServerAction = async (reply: ICelebrityReplyWrite) => {
+export const replyServerAction = async (reply: IReplyWrite) => {
     'use server';
     await nosqlDB.models.CelebrityComment.createReply({
         ...reply,

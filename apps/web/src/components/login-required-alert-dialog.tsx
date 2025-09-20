@@ -14,10 +14,10 @@ import Link from 'next/link';
 
 import { navigation } from '@/utils/navigation';
 
-export const LoginRequiredAlertDialog = ({
-    celebrityId,
-    ...props
-}: AlertDialogProps & { celebrityId: string }) => {
+import { useCelebrityProps } from '@/lib/context/celebrity-props';
+
+export const LoginRequiredAlertDialog = ({ ...props }: AlertDialogProps) => {
+    const celebrityProps = useCelebrityProps();
     return (
         <AlertDialog {...props}>
             <AlertDialogContent>
@@ -38,7 +38,9 @@ export const LoginRequiredAlertDialog = ({
                     <AlertDialogAction asChild>
                         <Link
                             href={navigation.login.redirect(
-                                navigation.celebrity.detail(celebrityId),
+                                navigation.celebrity.detail(
+                                    celebrityProps.celebProfile.id,
+                                ),
                             )}
                             className="flex items-center"
                         >
