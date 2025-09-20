@@ -48,11 +48,12 @@ describe("CelebrityComment", async () => {
           ...dummyCommentData,
           celebrityId,
           authorId: i % 2 === 0 ? userId1! : userId2!,
+          createdAt: new Date(Date.now() + Math.floor(Math.random() * 10000)),
         })
       )
     );
     topLevelCommentIds = comments.map((id) => id._id.toString());
-    const replies = await Promise.all(
+    const commentReplies = await Promise.all(
       topLevelCommentIds
         .map((id, i) =>
           Array.from({ length: TOTAL_REPLIES }).map(() =>
@@ -62,12 +63,15 @@ describe("CelebrityComment", async () => {
               parentId: id,
               authorId: i % 2 === 0 ? userId1! : userId2!,
               repliedAuthorId: i % 2 === 0 ? userId2! : userId1!,
+              createdAt: new Date(
+                Date.now() + Math.floor(Math.random() * 10000)
+              ),
             })
           )
         )
         .flat()
     );
-    replyCommentIds = replies.map((id) => id._id.toString());
+    replyCommentIds = commentReplies.map((id) => id._id.toString());
   });
 
   afterEach(async () => {
@@ -229,4 +233,103 @@ describe("CelebrityComment", async () => {
     expect(firstReply?.celebrityId.toString()).toBe(celebrityId);
     expect(firstReply?.isLikedByUser).toBe(false);
   });
+  test.for([
+    [0, 10],
+    [1, 1],
+    [2, 5],
+    [2, 4],
+    [1, 5],
+  ])(
+    "findReplies with %s skip and %s limit",
+    async ([skip = 0, limit = 10]) => {
+      const firstCommentId = topLevelCommentIds[0]!;
+      const replies = await nosqlDB.models.CelebrityComment.findReplies(
+        {
+          celebrityId,
+          commentId: firstCommentId,
+        },
+        {
+          skip,
+          limit,
+        }
+      );
+      const hasMore = skip + limit < TOTAL_REPLIES;
+      expect(replies.length).toBe(hasMore ? limit : TOTAL_REPLIES - skip);
+      expect(replies[0]?.parentId?.toString()).toBe(firstCommentId);
+      expect(replies[0]?.level).toBe(1);
+    }
+  );
+  test.for(["asc", "desc"])(
+    "findReplies with %s skip and %s limit",
+    async (sort) => {
+      const firstCommentId = topLevelCommentIds[0]!;
+      const replies = await nosqlDB.models.CelebrityComment.findReplies(
+        {
+          celebrityId,
+          commentId: firstCommentId,
+        },
+        {
+          skip: 0,
+          limit: 10,
+          sortBy: { createdAt: sort as "asc" | "desc" },
+        }
+      );
+      const hasMore = 0 + 10 < TOTAL_REPLIES;
+      expect(replies.length).toBe(hasMore ? 10 : TOTAL_REPLIES - 0);
+      expect(replies[0]?.parentId?.toString()).toBe(firstCommentId);
+      expect(replies[0]?.level).toBe(1);
+      const dates = replies.map((r) => r.createdAt?.getTime());
+      expectSortedDates(dates, sort as "asc" | "desc");
+    }
+  );
+
+  test("findReplies with isLikedUser property", async () => {
+    const celebrityId = new mongoose.Types.ObjectId().toString();
+    const userId = new mongoose.Types.ObjectId().toString();
+    const comment = await nosqlDB.models.CelebrityComment.createTopLevel({
+      ...dummyCommentData,
+      celebrityId,
+      authorId: userId,
+    });
+    const reply = await nosqlDB.models.CelebrityComment.createReply({
+      ...dummyReplyData,
+      parentId: comment._id.toString(),
+      authorId: userId,
+      celebrityId,
+    });
+
+    await nosqlDB.models.CelebrityComment.likeComment({
+      commentId: reply._id.toString(),
+      userId,
+    });
+
+    const replies = await nosqlDB.models.CelebrityComment.findReplies({
+      celebrityId,
+      commentId: comment._id.toString(),
+      userId,
+    });
+    const [firstReply] = replies;
+    expect(firstReply).toBeDefined();
+    expect(firstReply?._id.toString()).toBe(reply._id.toString());
+    expect(firstReply?.parentId?.toString()).toBe(comment._id.toString());
+    expect(firstReply?.authorId).toBe(userId);
+    expect(firstReply?._id.toString()).toBe(reply._id.toString());
+    expect(firstReply?.isLikedByUser).toBe(true);
+    expect(firstReply?.likes).toBe(1);
+  });
 });
+
+const expectSortedDates = (
+  dates: (number | undefined)[],
+  sort: "asc" | "desc"
+) => {
+  if (sort === "asc") {
+    for (let i = 1; i < dates.length; i++) {
+      expect(dates[i]).toBeGreaterThanOrEqual(dates[i - 1]!);
+    }
+  } else {
+    for (let i = 1; i < dates.length; i++) {
+      expect(dates[i]).toBeLessThanOrEqual(dates[i - 1]!);
+    }
+  }
+};

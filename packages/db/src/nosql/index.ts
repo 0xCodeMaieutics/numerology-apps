@@ -13,6 +13,7 @@ export type NoSQLDB = {
   models: {
     CelebrityComment: {
       findCommentsWithReplies: CelebrityCommentQueries.FindCommentsWithReplies;
+      findReplies: CelebrityCommentQueries.FindReplies;
       findById: CelebrityCommentQueries.FindById;
       unlikeComment: CelebrityCommentQueries.UnlikeComment;
       likeComment: CelebrityCommentQueries.LikeComment;
@@ -116,6 +117,10 @@ export const nosqlDB: NoSQLDB = {
           { $inc: { likes: 1 } },
           { session: data.session }
         );
+      },
+      findReplies: async (args, options) => {
+        await connect();
+        return CelebrityCommentQueries.findReplies(args, options);
       },
     },
     CommentLike: {

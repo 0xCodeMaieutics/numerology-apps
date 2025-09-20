@@ -6,7 +6,7 @@ import { COMMENT_LIKES_COLLECTION } from "../../schema/comment-like";
 import CelebrityComment from "../../schema/celebrity-comment";
 import { PipelineStage, Types } from "mongoose";
 
-export type FindCommentsWithRepliesOptions = {
+type Options = {
   skip?: number;
   limit?: number;
   replySkip?: number;
@@ -17,14 +17,12 @@ export type FindCommentsWithRepliesOptions = {
   };
 };
 
-export type FindCommentsWithRepliesArgs = {
-  celebrityId: string;
-  userId?: string;
-};
-
 export type FindCommentsWithReplies = (
-  args: FindCommentsWithRepliesArgs,
-  options?: FindCommentsWithRepliesOptions
+  args: {
+    celebrityId: string;
+    userId?: string;
+  },
+  options?: Options
 ) => Promise<IComment[]>;
 
 export const findCommentsWithReplies: FindCommentsWithReplies = async (
@@ -38,7 +36,6 @@ export const findCommentsWithReplies: FindCommentsWithReplies = async (
     replyLimit = 5,
     sortBy = { createdAt: "desc", replyCreatedAt: "desc" },
   } = options ?? {};
-
   const replyPipeline: any[] = [
     {
       $match: {
@@ -52,7 +49,6 @@ export const findCommentsWithReplies: FindCommentsWithReplies = async (
     },
     { $skip: replySkip },
     { $limit: replyLimit },
-
     {
       $lookup: {
         from: COMMENT_LIKES_COLLECTION,
@@ -106,7 +102,6 @@ export const findCommentsWithReplies: FindCommentsWithReplies = async (
       $project: {
         ...(userId ? { userLike: 0 } : {}),
         likesCountResult: 0,
-        repliedToUserInfo: 0,
       },
     }
   );
