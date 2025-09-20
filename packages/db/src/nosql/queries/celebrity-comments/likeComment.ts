@@ -1,6 +1,6 @@
 import CommentLike from "../../schema/comment-like";
 import CelebrityComment from "../../schema/celebrity-comment";
-
+import mongoose from "mongoose";
 export type LikeComment = (data: {
   userId: string;
   commentId: string;
