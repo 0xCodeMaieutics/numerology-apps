@@ -36,6 +36,7 @@ export type IComment = IBase & {
   level: 0;
   hasMoreReplies?: boolean;
   replies?: IReply[];
+  replyCount?: number;
 };
 
 export type ICommentWrite = Partial<IBase>;
