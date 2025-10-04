@@ -1,113 +1,66 @@
-import mongoose, { PipelineStage, Types } from "mongoose";
-import {
-  CELEBRITY_COMMENTS_COLLECTION,
-  ICelebrityComment,
-  ICelebrityCommentWithoutObjectId,
-  ICelebrityCommentWrite,
-  ICelebrityReplyWrite,
-} from "./schema/celebrity-comment";
+import mongoose from "mongoose";
+import { IBaseMongoDB } from "./schema/celebrity-comment";
 import CelebrityComment from "./schema/celebrity-comment";
-import CommentLike, { COMMENT_LIKES_COLLECTION } from "./schema/comment-like";
+import CommentLike, { ICommentLike } from "./schema/comment-like";
 import connect from "./connect";
+import * as CelebrityCommentQueries from "./queries/celebrity-comments";
+import { CustomDocument } from "./queries/types";
 
-export type NoSQLQueries = {
-  CelebrityComment: {
-    create: mongoose.Document<unknown, {}, ICelebrityComment, {}, {}> &
-      ICelebrityCommentWithoutObjectId & {
-        _id: mongoose.Types.ObjectId;
-      };
-    findByCelebrityId: (mongoose.Document<
-      unknown,
-      {},
-      ICelebrityCommentWithoutObjectId,
-      {},
-      {}
-    > &
-      ICelebrityCommentWithoutObjectId)[];
+export type NoSQLDB = {
+  connect: () => Promise<typeof mongoose>;
+  CelebrityComment: typeof CelebrityComment;
+  CommentLike: typeof CommentLike;
+  models: {
+    CelebrityComment: {
+      findCommentsWithReplies: CelebrityCommentQueries.FindCommentsWithReplies;
+      findReplies: CelebrityCommentQueries.FindReplies;
+      findById: CelebrityCommentQueries.FindById;
+      unlikeComment: CelebrityCommentQueries.UnlikeComment;
+      likeComment: CelebrityCommentQueries.LikeComment;
+      createTopLevel: CelebrityCommentQueries.CreateTopLevel;
+      createReply: CelebrityCommentQueries.CreateReply;
+      getCommentAndRepliesCount: (celebrityId: string) => Promise<number>;
+      getCommentsCount: (celebrityId: string) => Promise<number>;
+      findCommentsByCelebrityId: (
+        celebrityId: string
+      ) => Promise<CustomDocument<IBaseMongoDB>[]>;
+      decrementLikes: (data: {
+        commentId: string;
+        session?: mongoose.ClientSession;
+      }) => Promise<CustomDocument<IBaseMongoDB> | null>;
+      incrementLikes: (data: {
+        commentId: string;
+        session?: mongoose.ClientSession;
+      }) => Promise<CustomDocument<IBaseMongoDB> | null>;
+    };
+    CommentLike: {
+      findOne: (data: {
+        userId: string;
+        commentId: string;
+      }) => Promise<CustomDocument<ICommentLike> | null>;
+    };
   };
 };
 
-export const nosqlDB = {
+export const nosqlDB: NoSQLDB = {
   connect,
   CelebrityComment,
   CommentLike,
   models: {
     CelebrityComment: {
-      findById: async (id: string) => {
+      findById: async (id) => {
         await connect();
-        return CelebrityComment.findById(new mongoose.Types.ObjectId(id));
+        return CelebrityCommentQueries.findById(id);
       },
-
-      unlikeComment: async ({
-        commentId,
-        userId,
-      }: {
-        commentId: string;
-        userId: string;
-      }) => {
+      unlikeComment: async (args) => {
         await connect();
-        const session = await mongoose.startSession();
-
-        await session.withTransaction(async () => {
-          const existingLike = await CommentLike.findOne({
-            userId,
-            commentId: new mongoose.Types.ObjectId(commentId),
-          }).session(session);
-
-          if (!existingLike)
-            throw new Error("Comment not liked by user, cannot unlike");
-
-          await CelebrityComment.findByIdAndUpdate(
-            commentId,
-            { $inc: { likes: -1 } },
-            { session: session }
-          );
-
-          await CommentLike.deleteOne(
-            {
-              userId,
-              commentId: commentId,
-            },
-            { session: session }
-          );
-        });
+        await CelebrityCommentQueries.unlikeComment(args);
       },
-      likeComment: async ({
-        commentId,
-        userId,
-      }: {
-        commentId: string;
-        userId: string;
-      }) => {
+      likeComment: async (args) => {
         await connect();
-        const session = await mongoose.startSession();
-
-        await session.withTransaction(async () => {
-          const existingLike = await CommentLike.findOne({
-            userId,
-            commentId: new mongoose.Types.ObjectId(commentId),
-          }).session(session);
-
-          if (existingLike) throw new Error("Comment already liked by user");
-
-          await CelebrityComment.findByIdAndUpdate(
-            commentId,
-            { $inc: { likes: 1 } },
-            { session: session }
-          );
-
-          await CommentLike.insertOne(
-            {
-              userId,
-              commentId: commentId,
-            },
-            {
-              session: session,
-            }
-          );
-        });
+        await CelebrityCommentQueries.likeComment(args);
       },
-      createTopLevel: async (data: ICelebrityCommentWrite) => {
+      createTopLevel: async (data) => {
         await connect();
         return CelebrityComment.create({
           ...data,
@@ -116,7 +69,7 @@ export const nosqlDB = {
           level: 0,
         });
       },
-      createReply: async (data: ICelebrityReplyWrite) => {
+      createReply: async (data) => {
         await connect();
         return CelebrityComment.create({
           ...data,
@@ -126,240 +79,30 @@ export const nosqlDB = {
           likes: 0,
         });
       },
-      getCommentAndRepliesCount: async (celebrityId: string) => {
+      getCommentAndRepliesCount: async (celebrityId) => {
         await connect();
         return CelebrityComment.countDocuments({
           celebrityId: new mongoose.Types.ObjectId(celebrityId),
         });
       },
-      findCommentsByCelebrityId: async (celebrityId: string) => {
+      getCommentsCount: async (celebrityId) => {
+        await connect();
+        return CelebrityComment.countDocuments({
+          celebrityId: new mongoose.Types.ObjectId(celebrityId),
+          parentId: null,
+        });
+      },
+      findCommentsByCelebrityId: async (celebrityId) => {
         await connect();
         return CelebrityComment.find({
           celebrityId: new mongoose.Types.ObjectId(celebrityId),
         }).sort({ createdAt: -1 });
       },
-      findCommentsWithReplies: async (
-        { celebrityId, userId }: { celebrityId: string; userId?: string },
-        options: {
-          skip?: number;
-          limit?: number;
-          replySkip?: number;
-          replyLimit?: number;
-          sortBy?: {
-            createdAt?: "asc" | "desc";
-            replyCreatedAt?: "asc" | "desc";
-          };
-        } = {}
-      ): Promise<ICelebrityCommentWithoutObjectId[]> => {
+      findCommentsWithReplies: async (args, options) => {
         await connect();
-        const {
-          skip = 0,
-          limit = 10,
-          replySkip = 0,
-          replyLimit = 5,
-          sortBy = { createdAt: "desc", replyCreatedAt: "desc" },
-        } = options;
-
-        const replyPipeline: any[] = [
-          {
-            $match: {
-              $expr: { $eq: ["$parentId", "$$commentId"] },
-            },
-          },
-          {
-            $sort: {
-              createdAt: sortBy.replyCreatedAt === "asc" ? 1 : -1,
-            },
-          },
-          { $skip: replySkip },
-          { $limit: replyLimit },
-
-          {
-            $lookup: {
-              from: COMMENT_LIKES_COLLECTION,
-              let: { replyId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ["$commentId", "$$replyId"] },
-                  },
-                },
-                { $count: "total" },
-              ],
-              as: "likesCountResult",
-            },
-          },
-        ];
-
-        if (userId)
-          replyPipeline.push({
-            $lookup: {
-              from: COMMENT_LIKES_COLLECTION,
-              let: { replyId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$commentId", "$$replyId"] },
-                        { $eq: ["$userId", userId] },
-                      ],
-                    },
-                  },
-                },
-              ],
-              as: "userLike",
-            },
-          });
-
-        replyPipeline.push(
-          {
-            $addFields: {
-              ...(userId
-                ? { isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] } }
-                : {}),
-              likesCount: {
-                $ifNull: [{ $arrayElemAt: ["$likesCountResult.total", 0] }, 0],
-              },
-            },
-          },
-          {
-            $project: {
-              ...(userId ? { userLike: 0 } : {}),
-              likesCountResult: 0,
-              repliedToUserInfo: 0,
-            },
-          }
-        );
-
-        const pipeline: PipelineStage[] = [
-          {
-            $match: {
-              celebrityId: new Types.ObjectId(celebrityId),
-              parentId: null,
-            },
-          },
-          { $sort: { createdAt: sortBy.createdAt === "asc" ? 1 : -1 } },
-          { $skip: skip },
-          { $limit: limit },
-        ];
-
-        if (userId)
-          pipeline.push({
-            $lookup: {
-              from: COMMENT_LIKES_COLLECTION,
-              let: { commentId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$commentId", "$$commentId"] },
-                        { $eq: ["$userId", userId] },
-                      ],
-                    },
-                  },
-                },
-              ],
-              as: "userLike",
-            },
-          });
-
-        pipeline.push(
-          {
-            $lookup: {
-              from: COMMENT_LIKES_COLLECTION,
-              let: { commentId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ["$commentId", "$$commentId"] },
-                  },
-                },
-                { $count: "total" },
-              ],
-              as: "likesCountResult",
-            },
-          },
-          {
-            $lookup: {
-              from: CELEBRITY_COMMENTS_COLLECTION,
-              let: { commentId: "$_id" },
-              pipeline: replyPipeline,
-              as: "replies",
-            },
-          },
-          {
-            $lookup: {
-              from: CELEBRITY_COMMENTS_COLLECTION,
-              let: { commentId: "$_id" },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: { $eq: ["$parentId", "$$commentId"] },
-                  },
-                },
-                { $count: "total" },
-              ],
-              as: "replyCountResult",
-            },
-          },
-          {
-            $addFields: {
-              ...(userId
-                ? { isLikedByUser: { $gt: [{ $size: "$userLike" }, 0] } }
-                : {}),
-              likesCount: {
-                $ifNull: [
-                  { $arrayElemAt: ["$likesCountResult.total", 0] }, // likesCountResult => [{ total: number }]
-                  0,
-                ],
-              },
-              replyCount: {
-                $ifNull: [
-                  { $arrayElemAt: ["$replyCountResult.total", 0] }, // replyCountResult => [{ total: number }]
-                  0,
-                ],
-              },
-              hasMoreReplies: {
-                $gt: [
-                  {
-                    $ifNull: [
-                      { $arrayElemAt: ["$replyCountResult.total", 0] }, // replyCountResult => [{ total: number }]
-                      0,
-                    ],
-                  },
-                  { $add: [replySkip, replyLimit] },
-                ],
-              },
-            },
-          },
-          {
-            $project: {
-              userLike: 0,
-              likesCountResult: 0,
-              replyCountResult: 0,
-            },
-          }
-        );
-
-        return (await CelebrityComment.aggregate(pipeline)).map((doc) => ({
-          ...doc,
-          _id: doc._id.toString(),
-          celebrityId: doc.celebrityId.toString(),
-          parentId: doc.parentId ? doc.parentId.toString() : null,
-          replies: doc.replies.map((reply: any) => ({
-            ...reply,
-            _id: reply._id.toString(),
-            celebrityId: reply.celebrityId.toString(),
-            parentId: reply.parentId ? reply.parentId.toString() : null,
-          })),
-        }));
+        return CelebrityCommentQueries.findCommentsWithReplies(args, options);
       },
-      decrementLikes: async (data: {
-        commentId: string;
-        session?: mongoose.ClientSession;
-      }) => {
+      decrementLikes: async (data) => {
         await connect();
         return CelebrityComment.findByIdAndUpdate(
           data.commentId,
@@ -367,10 +110,7 @@ export const nosqlDB = {
           { session: data.session }
         );
       },
-      incrementLikes: async (data: {
-        commentId: string;
-        session?: mongoose.ClientSession;
-      }) => {
+      incrementLikes: async (data) => {
         await connect();
         return CelebrityComment.findByIdAndUpdate(
           data.commentId,
@@ -378,15 +118,13 @@ export const nosqlDB = {
           { session: data.session }
         );
       },
+      findReplies: async (args, options) => {
+        await connect();
+        return CelebrityCommentQueries.findReplies(args, options);
+      },
     },
     CommentLike: {
-      findOne: async ({
-        commentId,
-        userId,
-      }: {
-        userId: string;
-        commentId: string;
-      }) => {
+      findOne: async ({ commentId, userId }) => {
         await connect();
         return CommentLike.findOne({
           userId: new mongoose.Types.ObjectId(userId),
@@ -398,9 +136,8 @@ export const nosqlDB = {
 };
 
 export type {
-  ICelebrityComment,
-  ICelebrityCommentWrite,
-  ICelebrityReplyWrite,
-  ICelebrityCommentWithoutObjectId,
-  ICelebrityCommentBaseWithoutObjectId,
+  IComment,
+  ICommentWrite,
+  IReplyWrite,
+  IReply,
 } from "./schema/celebrity-comment";
